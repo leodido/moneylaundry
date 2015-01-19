@@ -186,9 +186,9 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
             // strict validation
             ['1.234,61 €', true, 'it_IT', $opts['110']],
             ['1.234,61 EUR', true, 'it_IT', $opts['110']],
-            ['1.234 €', false, 'it_IT', $opts['110']], // because not digitals
+            ['1.234 €', false, 'it_IT', $opts['110']], // because there isn't digital places
             ['-1.234.10 €', false, 'it_IT', $opts['110']], // because negative amount
-            ['1.234.61', false, 'it_IT', $opts['110']], // because no currency symbol
+            ['1.234,61', false, 'it_IT', $opts['110']], // because no currency symbol
         ];
 
         return $data;
