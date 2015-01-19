@@ -13,6 +13,7 @@ use Zend\Stdlib\StringUtils;
 
 /**
  * Class UncurrencyTest
+ * @group filters
  */
 class UncurrencyTest extends \PHPUnit_Framework_TestCase
 {
@@ -21,7 +22,7 @@ class UncurrencyTest extends \PHPUnit_Framework_TestCase
     public function setUp()
     {
         if (!extension_loaded('mbstring')) {
-            $this->markTestSkipped('The mbstring extension is not available.');
+            $this->markTestSkipped('The mbstring extension is not installed/enabled');
         }
         //
         $this->defaultLocale = ini_get('intl.default_locale');
@@ -89,7 +90,7 @@ class UncurrencyTest extends \PHPUnit_Framework_TestCase
 //        $this->assertInstanceOf('NumberFormatter', $filter->getFormatter());
 //    }
 //
-//    public function testSetLocale()
+//    public function testLocaleOption()
 //    {
 //        $filter = new Uncurrency;
 //        $this->assertInstanceOf('MoneyLaundry\Filter\Uncurrency', $filter->setLocale('it_IT'));
@@ -201,7 +202,7 @@ class UncurrencyTest extends \PHPUnit_Framework_TestCase
 //        $this->assertEquals(1234.61, $filter->filter('1.234,61€'));
 //        $this->assertEquals(1234.61, $filter->filter('1.234,61'));
 //        $this->assertEquals(1234.61, $filter->filter('1234,61'));
-        $this->assertEquals(1234.61, $filter->filter('1234,61 EUR'));
+        $this->assertEquals(1234.61, $filter->filter('1234,61 EUR')); // FIXME: does not work with ICU 4.8.1.1
 //        $this->assertEquals(1234.61, $filter->filter('1234,61 EURO'));
 //        $this->assertEquals(1234.619, $filter->filter('1234,619'));
 //        $this->assertEquals(1234.619, $filter->filter('1234,619 €'));

@@ -8,7 +8,7 @@
  */
 namespace MoneyLaundry\Filter;
 
-use Zend\I18n\Exception;
+use Zend\I18n\Exception as I18nException;
 use Zend\I18n\Filter\AbstractLocale;
 use Zend\Stdlib\ErrorHandler;
 use Zend\Stdlib\StringUtils;
@@ -82,7 +82,7 @@ class Uncurrency extends AbstractLocale
         parent::__construct();
         // @codeCoverageIgnoreStart
         if (!extension_loaded('mbstring')) {
-            throw new Exception\ExtensionNotLoadedException(sprintf(
+            throw new I18nException\ExtensionNotLoadedException(sprintf(
                 '%s component requires the mbstring PHP extension',
                 __NAMESPACE__
             ));
@@ -258,7 +258,10 @@ class Uncurrency extends AbstractLocale
     }
 
     /**
-     * {@inheritdoc}
+     * Returns the result of filtering $value
+     *
+     * @param  mixed $value
+     * @return string
      */
     public function filter($value)
     {
@@ -279,9 +282,6 @@ class Uncurrency extends AbstractLocale
             $currency = $this->getFormatter();
             $position = 0;
             $result = $currency->parseCurrency($value, $isoCurrencySym, $position);
-
-            var_dump($currency->getErrorCode());
-            var_dump($currency->getErrorMessage());
 
             // Input is a valid currency?
             if ($result !== false) {
@@ -364,7 +364,9 @@ class Uncurrency extends AbstractLocale
     public function getSymbols()
     {
         if (count($this->symbols) == 0) {
-            throw new Exception\RuntimeException('Symbols are not present because the filter has not been initialized');
+            throw new I18nException\RuntimeException(
+                'Symbols are not present because the filter has not been initialized'
+            );
         }
 
         return $this->symbols;
@@ -378,7 +380,7 @@ class Uncurrency extends AbstractLocale
     public function getRegexComponents()
     {
         if (count($this->regexComponents) == 0) {
-            throw new Exception\RuntimeException(
+            throw new I18nException\RuntimeException(
                 'Regex components are not present because the filter has not been initialized'
             );
         }
@@ -397,7 +399,7 @@ class Uncurrency extends AbstractLocale
         $symbols = $this->getSymbols();
 
         if (!isset($symbols[$symbol])) {
-            throw new Exception\InvalidArgumentException(sprintf(
+            throw new I18nException\InvalidArgumentException(sprintf(
                 'Symbol not found; received "%s"',
                 $symbol
             ));
@@ -417,7 +419,7 @@ class Uncurrency extends AbstractLocale
         $regexComponents = $this->getRegexComponents();
 
         if (!isset($regexComponents[$regexComponent])) {
-            throw new Exception\InvalidArgumentException(sprintf(
+            throw new I18nException\InvalidArgumentException(sprintf(
                 'Regex component not found; received "%s"',
                 $regexComponent
             ));

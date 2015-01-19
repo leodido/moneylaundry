@@ -1,9 +1,9 @@
 MoneyLaundry
 ============
 
-[![Latest Stable Version](http://img.shields.io/packagist/v/leodido/moneylaundry.svg?style=flat-square)](https://packagist.org/packages/leodido/moneylaundry) [![Build Status](https://img.shields.io/travis/leodido/moneylaundry.svg?style=flat-square)](https://travis-ci.org/leodido/moneylaundry) [![Coverage](http://img.shields.io/coveralls/leodido/moneylaundry.svg?style=flat-square)](https://coveralls.io/r/leodido/moneylaundry)
+[![Latest Stable Version](http://img.shields.io/packagist/v/leodido/moneylaundry.svg?style=flat-square)](https://packagist.org/packages/leodido/moneylaundry)
 
-Collection of utilities to filter and validate money.
+Collection of utilities to filter and validate money with **I18n** in mind.
 
 This library includes (will include) a series of classes aimed at **filtering**, **validating**, **formatting**, and **cleaning up** of monetary and currency values.
 
@@ -20,7 +20,7 @@ Residing in `MoneyLaundry\Filter` namespace.
 
     Give him a currency and get the corresponding amount, if the input was correctly formatted according to the chosen locale and filter options
 
-2. `Currency` **(*)**
+2. `Currency`
 
     Give him a number, choose a locale and get back a localized currency amount
 
@@ -28,7 +28,9 @@ Residing in `MoneyLaundry\Filter` namespace.
 
 Residing in `MoneyLaundry\Validator` namespace.
 
-1. Currency **(*)**
+1. `Currency`
+
+    Validate the input as a valid and well-formatted currency amount for the given locale.
 
 Examples
 --------
@@ -48,10 +50,10 @@ Add `leodido/moneylaundry` to your `composer.json`.
 }
 ```
 
-To-do
------
+Todo list
+---------
 
-See **(*)**.
+1. Implement `MoneyLaundry\Filter\Currency`
 
 ---
 
