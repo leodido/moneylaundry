@@ -11,7 +11,7 @@ use Zend\I18n\Exception as I18nException;
 /**
  * Class ScientificNotation
  *
- * TODO: docs
+ * Validate the input as a valid number expressed in scientific notation for the given locale.
  */
 class ScientificNotation extends AbstractValidator
 {

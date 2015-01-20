@@ -15,6 +15,12 @@ use Zend\I18n\Exception as I18nException;
 
 /**
  * Class Currency
+ *
+ * Validate the input as a valid and well-formatted currency amount for the given locale.
+ *
+ * The validation process can be tuned according to the user preferences and needs.
+ * Infact it can also accept currency amounts without the currency symbol and/or
+ * currency amounts whose number of decimal places does not match the one specified by the locale pattern.
  */
 class Currency extends AbstractValidator
 {
