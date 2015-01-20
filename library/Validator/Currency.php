@@ -28,9 +28,9 @@ class Currency extends AbstractValidator
      * @var array
      */
     protected $messageTemplates = [
-        self::INVALID => "Invalid input given: string expected",
-        self::NOT_CURRENCY => "The input is not a well-formatted currency",
-        self::NOT_POSITIVE => "The input does not appear to be a positive currency",
+        self::INVALID => "Invalid input given: '%value%' is not a string",
+        self::NOT_CURRENCY => "The '%value%' value is not a well-formatted currency",
+        self::NOT_POSITIVE => "The '%value%' value does not appear to be a positive currency",
     ];
 
     /**

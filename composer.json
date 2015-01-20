@@ -11,11 +11,16 @@
   },
   "require-dev": {
     "phpunit/phpunit": "~4.3",
-    "satooshi/php-coveralls": "dev-master"
+    "satooshi/php-coveralls": "dev-master",
+    "ripaclub/zf2-sphinxsearch-tool": "dev-develop"
   },
   "autoload": {
     "psr-4": {
-      "MoneyLaundry\\": "library/",
+      "MoneyLaundry\\": "library/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
       "MoneyLaundryTest\\": "tests/"
     }
   },

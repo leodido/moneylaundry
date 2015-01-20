@@ -11,8 +11,9 @@ if (!file_exists('../vendor/autoload.php')) {
     throw new \RuntimeException('vendor/autoload.php not found. Run a composer install.');
 }
 
-echo sprintf('intl version: %s', phpversion('intl')) . PHP_EOL;
-echo sprintf('icu version: %s', constant('INTL_ICU_VERSION')) . PHP_EOL;
+echo 'Settings:' . PHP_EOL;
+echo sprintf('intl: %s', phpversion('intl')) . PHP_EOL;
+echo sprintf('icu: %s', constant('INTL_ICU_VERSION')) . PHP_EOL;
 echo sprintf('LC_MONETARY: %s', setlocale(LC_MONETARY, '0')) . PHP_EOL;
 echo sprintf('LC_NUMERIC: %s', setlocale(LC_NUMERIC, '0')) . PHP_EOL;
-print_r(localeconv());
+echo PHP_EOL;

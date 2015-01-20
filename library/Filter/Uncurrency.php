@@ -177,6 +177,10 @@ class Uncurrency extends AbstractLocale
     }
 
     /**
+     * Set a number formatter
+     *
+     * Note that using a custom formatter will probably void the class functionalities.
+     *
      * @param  \NumberFormatter $formatter
      * @return $this
      */
@@ -189,6 +193,8 @@ class Uncurrency extends AbstractLocale
     }
 
     /**
+     * Retrieve (and lazy load) the number formatter
+     *
      * @return \NumberFormatter
      */
     public function getFormatter()
@@ -324,7 +330,7 @@ class Uncurrency extends AbstractLocale
                 }
 
                 // Ignore spaces
-                $value =  str_replace("\xC2\xA0", '', $value); // FIXME? use one (' ') space
+                $value = str_replace("\xC2\xA0", '', $value);
 
                 // Substitute negative currency representation with negative number representation
                 $decimalNegPrefix = $decimal->getTextAttribute(\NumberFormatter::NEGATIVE_PREFIX);
