@@ -35,8 +35,14 @@ class Currency extends AbstractValidator
      */
     protected $messageTemplates = [
         self::INVALID => "Invalid input given: '%value%' is not a string",
-        self::NOT_CURRENCY => "The '%value%' value is not a well-formatted currency",
+        self::NOT_CURRENCY => "The '%value%' is not a well-formatted currency; the requested format is %format%",
         self::NOT_POSITIVE => "The '%value%' value does not appear to be a positive currency",
+    ];
+
+    protected $pattern;
+
+    protected $messageVariables = [
+        'format' => 'pattern'
     ];
 
     /**
@@ -218,12 +224,12 @@ class Currency extends AbstractValidator
      */
     public function isValid($value)
     {
+        $this->setValue($value);
         if (!is_string($value)) {
             $this->error(self::INVALID);
             return false;
         }
 
-        $this->setValue($value);
         $filter = new Uncurrency(
             $this->getLocale(),
             $this->isFractionDigitsMandatory(),
@@ -231,12 +237,14 @@ class Currency extends AbstractValidator
         );
         $result = $filter->filter($this->getValue());
         if ($result !== $this->getValue()) {
+            // Filter succedeed
             if (!$this->isNegativeAllowed() && $result < 0) {
                 $this->error(self::NOT_POSITIVE);
                 return false;
             }
             return true;
         }
+        $this->pattern = $filter->getFormatter()->getPattern();
         $this->error(self::NOT_CURRENCY);
         return false;
     }

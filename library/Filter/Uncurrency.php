@@ -442,13 +442,6 @@ class Uncurrency extends AbstractLocale
      */
     protected function countDecimalDigits($number)
     {
-//        FIXME: old count of decimal digits
-//        $decimals = explode($this->getSymbol(self::SEPARATOR_SYMBOL), $number);
-//        return preg_match_all(
-//            '#' . $this->getRegexComponent(self::REGEX_NUMBERS) . '#' . $this->getRegexComponent(self::REGEX_FLAGS),
-//            isset($decimals[1]) ? $decimals[1] : ''
-//        );
-
         $decimals = mb_substr(mb_strrchr($number, $this->getSymbol(self::SEPARATOR_SYMBOL), false), 1);
         return preg_match_all(
             sprintf(
