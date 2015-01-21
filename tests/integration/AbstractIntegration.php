@@ -1,27 +1,23 @@
 <?php
-namespace MoneyLaundryTest\Integration\Validator;
+/**
+ * MoneyLaundry
+ *
+ * @link        https://github.com/leodido/moneylaundry
+ * @copyright   Copyright (c) 2015, Leo Di Donato
+ * @license     http://opensource.org/licenses/MIT      MIT license
+ */
+namespace MoneyLaundryIntegrationTest;
 
-use MoneyLaundry\Validator\ScientificNotation as ScientificNotationValidator;
 use SphinxSearch\Tool\Source\Writer\TSV;
 
 /**
- * Class ScientificNotationTest
- *
- * @group integration
+ * Class Integration
  */
-class ScientificNotationTest extends \PHPUnit_Framework_TestCase
+abstract class AbstractIntegration extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var ScientificNotationValidator
-     */
-    protected $validator;
-
-    /**
-     * @var array
-     */
-    protected $values = [1000, -2000, +398.00, 0.04, -0.5, .6, -.70, 8E10, -9.3456E-2, 10.23E6, 123.12345678909876];
-
-    /**
+     * All locales
+     *
      * @var array
      */
     protected $locales = [
@@ -149,7 +145,7 @@ class ScientificNotationTest extends \PHPUnit_Framework_TestCase
         'ko_KR',
         'ky_KG',
         'lb_LU',
-//        'lo_LA', // NOTE: appear to not have scientific notation
+        'lo_LA',
         'lt_LT',
         'lv_LV',
         'mi_NZ',
@@ -238,85 +234,114 @@ class ScientificNotationTest extends \PHPUnit_Framework_TestCase
     ];
 
     /**
+     * Writer
      * @var TSV
      */
-    protected static $writer;
+    private static $writer;
 
     /**
+     * Written line counter
      * @var int
      */
-    protected static $line = 0;
+    private static $line = 0;
 
-    public function setUp()
+    /**
+     * Where the writer have to write
+     * @var string
+     */
+    private static $filename;
+
+    /**
+     * Whether to write or not
+     *
+     * Override in child class to change class behaviour (used via late static binding).
+     *
+     * @var bool
+     */
+    protected static $write = false;
+
+    /**
+     * File header
+     *
+     * Override in child class to change (used via late static binding).
+     *
+     * @var array
+     */
+    protected static $header = [];
+
+    /**
+     * Exclude locales from pre-configured set
+     *
+     * @param array $locales
+     * @return $this
+     */
+    public function excludeLocales(array $locales)
     {
-        $this->validator = new ScientificNotationValidator;
+        $this->locales = array_diff($this->locales, $locales);
+        return $this;
     }
 
+    /**
+     * Use your own locale's set
+     *
+     * @param array $locales
+     * @return $this
+     */
+    public function overrideLocales(array $locales)
+    {
+        $this->locales = $locales;
+        return $this;
+    }
+
+    /**
+     * Setup a file, named after the child class, where to write test's data, before the first test of the child class
+     * is executed
+     *
+     * Note that if this file already exists it will NOT be overriden.
+     */
     public static function setUpBeforeClass()
     {
-        self::$writer = new TSV();
-        self::$writer->openURI('../data/scientificnotation.tsv');
-        self::$writer->beginOutput();
-        self::$writer->addDocument(['id' => 'ID', 'locale' => 'Locale', 'value' => 'Value', 'Scientific Notation']);
-    }
-
-    public static function tearDownAfterClass()
-    {
-        self::$writer->endOutput();
-    }
-
-    /**
-     * @param $expected
-     * @param $value
-     * @param $locale
-     * @dataProvider valuesProvider
-     */
-    public function testValues($expected, $value, $locale)
-    {
-        $this->validator->setLocale($locale);
-
-        self::$writer->addDocument(
-            [
-                'id' => self::$line,
-                'locale' => $locale,
-                'value' => $value,
-                'valid' => $expected ? 'true' : 'false'
-            ]
-        );
-
-        $this->assertEquals(
-            $expected,
-            $this->validator->isValid($value),
-            sprintf(
-                "'Failed expecting '%s' being %s (locale: %s, type: %s)",
-                $value,
-                $expected ? 'TRUE' : 'FALSE',
-                $locale,
-                gettype($value)
-            )
-        );
-
-        self::$line++;
-    }
-
-    /**
-     * @return array
-     */
-    public function valuesProvider()
-    {
-        $data = [];
-        foreach ($this->locales as $locale) {
-            foreach ($this->values as $i) {
-                $e = \NumberFormatter::create($locale, \NumberFormatter::SCIENTIFIC)
-                    ->format($i, \NumberFormatter::TYPE_DEFAULT);
-                $n = \NumberFormatter::create($locale, \NumberFormatter::DECIMAL)
-                    ->format($i, \NumberFormatter::TYPE_DEFAULT);
-
-                $data[] = [true, $e, $locale];
-                $data[] = [false, $n, $locale];
-            }
+        $directory = '../data/';
+        if (!file_exists($directory)) {
+            mkdir($directory, 0777, true);
         }
 
-        return $data;
+        $fullname = get_called_class();
+        $fullname = strtolower(end(explode('\\', $fullname)));
+        $fullname = str_replace('test', '', $fullname);
+        self::$filename = $directory . $fullname . '.tsv';
+
+        self::$write = !file_exists(self::$filename) ? true : false;
+
+        if (static::$write) {
+            self::$writer = new TSV();
+            self::$writer->openURI(self::$filename);
+            self::$writer->beginOutput();
+            self::$line = 0;
+            self::$writer->addDocument(['id' => 'ID'] + static::$header);
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function tearDownAfterClass()
+    {
+        if (static::$write) {
+            self::$writer->endOutput();
+        }
+    }
+
+    /**
+     * Write data
+     *
+     * @param array $data
+     */
+    public function writeData(array $data)
+    {
+        if (static::$write) {
+            $res = self::$writer->addDocument(['id' => self::$line] + $data);
+            self::$line++;
+        }
     }
 }

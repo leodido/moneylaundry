@@ -1,7 +1,7 @@
 <phpunit bootstrap="tests/bootstrap.php" colors="true" verbose="true">
     <testsuites>
-        <testsuite name="MoneyLaundry Test Suite">
-            <directory>tests</directory>
+        <testsuite name="MoneyLaundry Unit Test Suite">
+            <directory>tests/unit</directory>
         </testsuite>
     </testsuites>
     <filter>

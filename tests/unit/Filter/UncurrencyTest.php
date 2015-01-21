@@ -6,7 +6,7 @@
  * @copyright   Copyright (c) 2015, Leo Di Donato
  * @license     http://opensource.org/licenses/MIT      MIT license
  */
-namespace MoneyLaundryTest\Filter;
+namespace MoneyLaundryUnitTest\Filter;
 
 use MoneyLaundry\Filter\Uncurrency;
 use Zend\Stdlib\StringUtils;

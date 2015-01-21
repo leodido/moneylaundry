@@ -6,11 +6,11 @@
  * @copyright   Copyright (c) 2015, Leo Di Donato
  * @license     http://opensource.org/licenses/MIT      MIT license
  */
-namespace MoneyLaundryTest\Validator;
+namespace MoneyLaundryUnitTest\Validator;
 
 use MoneyLaundry\Filter\Uncurrency;
 use MoneyLaundry\Validator\Currency as CurrencyValidator;
-use MoneyLaundryTest\Integration\Combin;
+use MoneyLaundryTestAsset\Combin;
 use Zend\Stdlib\ArrayObject;
 
 /**

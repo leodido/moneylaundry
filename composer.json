@@ -21,7 +21,9 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "MoneyLaundryTest\\": "tests/"
+      "MoneyLaundryUnitTest\\": "tests/unit",
+      "MoneyLaundryIntegrationTest\\": "tests/integration",
+      "MoneyLaundryTestAsset\\": "tests/asset"
     }
   },
   "authors": [

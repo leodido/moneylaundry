@@ -1,5 +1,5 @@
 <?php
-namespace MoneyLaundryTest\Validator;
+namespace MoneyLaundryUnitTest\Validator;
 
 use MoneyLaundry\Validator\ScientificNotation as ScientificNotationValidator;
 use Zend\Stdlib\ArrayObject;

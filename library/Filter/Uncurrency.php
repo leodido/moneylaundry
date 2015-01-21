@@ -317,7 +317,7 @@ class Uncurrency extends AbstractLocale
             $flags = $this->getRegexComponent(self::REGEX_FLAGS);
 
             // Build allowed chars regex
-            $allowedChars = sprintf('/^[%s]+$/%s', $numbers . implode('', array_map('preg_quote', $symbols)), $flags);
+            $allowedChars = sprintf('#^[%s]+$#%s', $numbers . implode('', array_map('preg_quote', $symbols)), $flags);
 
             // Check that value contains only allowed characters (digits, group and decimal separator)
             $result = false;
@@ -339,7 +339,7 @@ class Uncurrency extends AbstractLocale
                 $currencyNegSuffix = $this->getSymbol(self::NEGATIVE_SUFFIX);
                 if ($decimalNegPrefix !== $currencyNegPrefix && $decimalNegSuffix !== $currencyNegSuffix) {
                     $regex = sprintf(
-                        '/^%s([%s%s%s]+)%s$/%s',
+                        '#^%s([%s%s%s]+)%s$#%s',
                         preg_quote($currencyNegPrefix),
                         $numbers,
                         preg_quote($this->getSymbol(self::SEPARATOR_SYMBOL)),
@@ -442,10 +442,21 @@ class Uncurrency extends AbstractLocale
      */
     protected function countDecimalDigits($number)
     {
-        $decimals = explode($this->getSymbol(self::SEPARATOR_SYMBOL), $number);
+//        FIXME: old count of decimal digits
+//        $decimals = explode($this->getSymbol(self::SEPARATOR_SYMBOL), $number);
+//        return preg_match_all(
+//            '#' . $this->getRegexComponent(self::REGEX_NUMBERS) . '#' . $this->getRegexComponent(self::REGEX_FLAGS),
+//            isset($decimals[1]) ? $decimals[1] : ''
+//        );
+
+        $decimals = mb_substr(mb_strrchr($number, $this->getSymbol(self::SEPARATOR_SYMBOL), false), 1);
         return preg_match_all(
-            '/' . $this->getRegexComponent(self::REGEX_NUMBERS) . '/' . $this->getRegexComponent(self::REGEX_FLAGS),
-            isset($decimals[1]) ? $decimals[1] : ''
+            sprintf(
+                '#%s#%s',
+                $this->getRegexComponent(self::REGEX_NUMBERS),
+                $this->getRegexComponent(self::REGEX_FLAGS)
+            ),
+            $decimals
         );
     }
 }

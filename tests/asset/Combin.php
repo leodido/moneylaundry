@@ -6,7 +6,7 @@
  * @copyright   Copyright (c) 2015, Leo Di Donato
  * @license     http://opensource.org/licenses/MIT      MIT license
  */
-namespace MoneyLaundryTest\Integration;
+namespace MoneyLaundryTestAsset;
 
 /**
  * Class Combin
