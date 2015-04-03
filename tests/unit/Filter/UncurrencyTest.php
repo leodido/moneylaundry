@@ -22,42 +22,42 @@ class UncurrencyTest extends AbstractTest
     {
         $filter = new Uncurrency();
         $this->assertEquals('en_US', $filter->getLocale());
-        $this->assertEquals(Uncurrency::DEFAULT_FRACTION_DIGITS_OBLIGATORINESS, $filter->isFractionDigitsMandatory());
-        $this->assertEquals(Uncurrency::DEFAULT_CURRENCY_OBLIGATORINESS, $filter->isCurrencyMandatory());
+        $this->assertEquals(Uncurrency::DEFAULT_SCALE_CORRECTNESS, $filter->getScaleCorrectness());
+        $this->assertEquals(Uncurrency::DEFAULT_CURRENCY_OBLIGATORINESS, $filter->getCurrencyObligatoriness());
 
         $filter = new Uncurrency('it_IT');
         $this->assertEquals('it_IT', $filter->getLocale());
-        $this->assertEquals(Uncurrency::DEFAULT_FRACTION_DIGITS_OBLIGATORINESS, $filter->isFractionDigitsMandatory());
-        $this->assertEquals(Uncurrency::DEFAULT_CURRENCY_OBLIGATORINESS, $filter->isCurrencyMandatory());
+        $this->assertEquals(Uncurrency::DEFAULT_SCALE_CORRECTNESS, $filter->getScaleCorrectness());
+        $this->assertEquals(Uncurrency::DEFAULT_CURRENCY_OBLIGATORINESS, $filter->getCurrencyObligatoriness());
 
         $filter = new Uncurrency('it_IT', false, false);
         $this->assertEquals('it_IT', $filter->getLocale());
-        $this->assertFalse($filter->isFractionDigitsMandatory());
-        $this->assertFalse($filter->isCurrencyMandatory());
+        $this->assertFalse($filter->getScaleCorrectness());
+        $this->assertFalse($filter->getCurrencyObligatoriness());
 
         $filter = new Uncurrency('it_IT', true, false);
         $this->assertEquals('it_IT', $filter->getLocale());
-        $this->assertTrue($filter->isFractionDigitsMandatory());
-        $this->assertFalse($filter->isCurrencyMandatory());
+        $this->assertTrue($filter->getScaleCorrectness());
+        $this->assertFalse($filter->getCurrencyObligatoriness());
 
         $filter = new Uncurrency('it_IT', false, true);
         $this->assertEquals('it_IT', $filter->getLocale());
-        $this->assertFalse($filter->isFractionDigitsMandatory());
-        $this->assertTrue($filter->isCurrencyMandatory());
+        $this->assertFalse($filter->getScaleCorrectness());
+        $this->assertTrue($filter->getCurrencyObligatoriness());
 
         $filter = new Uncurrency('it_IT', true, true);
         $this->assertEquals('it_IT', $filter->getLocale());
-        $this->assertTrue($filter->isFractionDigitsMandatory());
-        $this->assertTrue($filter->isCurrencyMandatory());
+        $this->assertTrue($filter->getScaleCorrectness());
+        $this->assertTrue($filter->getCurrencyObligatoriness());
 
         $filter = new Uncurrency([
             'locale' => 'it_IT',
-            'fraction_digits_mandatory' => false,
-            'currency_mandatory' => false
+            'scale_correctness' => false,
+            'currency_obligatoriness' => false
         ]);
         $this->assertEquals('it_IT', $filter->getLocale());
-        $this->assertFalse($filter->isFractionDigitsMandatory());
-        $this->assertFalse($filter->isCurrencyMandatory());
+        $this->assertFalse($filter->getScaleCorrectness());
+        $this->assertFalse($filter->getCurrencyObligatoriness());
     }
 
     public function testSetFormatter()
@@ -84,15 +84,15 @@ class UncurrencyTest extends AbstractTest
     public function testCurrencyMandatoryOption()
     {
         $filter = new Uncurrency;
-        $this->assertInstanceOf('MoneyLaundry\Filter\Uncurrency', $filter->setCurrencyMandatory(false));
-        $this->assertFalse($filter->isCurrencyMandatory());
+        $this->assertInstanceOf('MoneyLaundry\Filter\Uncurrency', $filter->setCurrencyObligatoriness(false));
+        $this->assertFalse($filter->getCurrencyObligatoriness());
     }
 
     public function testFractionDigitsMandatoryOption()
     {
         $filter = new Uncurrency;
-        $this->assertInstanceOf('MoneyLaundry\Filter\Uncurrency', $filter->setFractionDigitsMandatory(false));
-        $this->assertFalse($filter->isFractionDigitsMandatory());
+        $this->assertInstanceOf('MoneyLaundry\Filter\Uncurrency', $filter->setScaleCorrectness(false));
+        $this->assertFalse($filter->getScaleCorrectness());
     }
 
     /**
@@ -259,6 +259,45 @@ class UncurrencyTest extends AbstractTest
 
     public function testFiltersInfinityValues()
     {
+        $class = new \ReflectionClass('MoneyLaundry\Filter\Uncurrency');
+        $initializeMethod = $class->getMethod('initialize');
+        $initializeMethod->setAccessible(true);
+
+        $filter = new Uncurrency('ar_AE', false, true);
+        $formatter = $filter->getFormatter();
+        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
+
+        $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
+        $this->assertEquals('∞', $filter->filter('∞'));
+
+        $filter->setCurrencyObligatoriness(false);
+
+        $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
+        $this->assertEquals(INF, $filter->filter('∞'));
+
+        $filter = new Uncurrency('ru_RU', false, true);
+        $formatter = $filter->getFormatter();
+        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
+
+        $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
+        $this->assertEquals('∞', $filter->filter('∞'));
+
+        $filter->setCurrencyObligatoriness(false);
+
+        $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
+        $this->assertEquals(INF, $filter->filter('∞'));
+
+        $filter = new Uncurrency('bn_IN', false, true);
+        $formatter = $filter->getFormatter();
+        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
+
+        $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
+        $this->assertEquals('∞', $filter->filter('∞'));
+
+        $filter->setCurrencyObligatoriness(false);
+
+        $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
+        $this->assertEquals(INF, $filter->filter('∞'));
     }
 
     public function testFiltersNaNValues()
@@ -271,21 +310,25 @@ class UncurrencyTest extends AbstractTest
         $formatter = $filter->getFormatter();
         $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
         $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "ليس رقم"
+        $this->assertTrue(is_nan($filter->filter($formatter->format(acos(1.01))))); // "ليس رقم"
 
         $filter->setLocale('bn_IN');
         $formatter = $filter->getFormatter();
         $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
         $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "সংখ্যা না"
+        $this->assertTrue(is_nan($filter->filter($formatter->format(acos(1.01))))); // "সংখ্যা না"
 
         $filter->setLocale('it_IT');
         $formatter = $filter->getFormatter();
         $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
         $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "NaN"
+        $this->assertTrue(is_nan($filter->filter($formatter->format(acos(1.01))))); // "NaN"
 
         $filter->setLocale('ru_RU');
         $formatter = $filter->getFormatter();
         $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
         $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "не число"
+        $this->assertTrue(is_nan($filter->filter($formatter->format(acos(1.01))))); // "не число"
 
         $initializeMethod->setAccessible(false);
     }
@@ -302,11 +345,11 @@ class UncurrencyTest extends AbstractTest
         $this->assertEquals(1234.61, $filter->filter('1.234,61€'));
         $this->assertEquals(1234.61, $filter->filter('1.234,61'));
         $this->assertEquals(1234.61, $filter->filter('1234,61'));
-
         $this->assertEquals(1234.61, $filter->filter('1234,61 EURO'));
         $this->assertEquals(1234.619, $filter->filter('1234,619'));
         $this->assertEquals(1234.619, $filter->filter('1234,619 €'));
         $this->assertEquals(-0.01, $filter->filter('-0,01€'));
+        $this->assertEquals(-0.5, $filter->filter('-0,5€'));
 
         if (version_compare($GLOBALS['INTL_ICU_VERSION'], '4.8.1.1') > 0) {
             $this->assertEquals(1234.61, $filter->filter('1234,61 EUR')); // Because of (3)
@@ -317,14 +360,18 @@ class UncurrencyTest extends AbstractTest
         $this->assertEquals('1E-2 €', $filter->filter('1E-2 €'));
 
         // (2) correct number of decimal places required/mandatory
-        $filter->setFractionDigitsMandatory(true);
+        $filter->setScaleCorrectness(true);
 
         // No more allowed
         $this->assertEquals('1.234,619 €', $filter->filter('1.234,619 €'));
         $this->assertEquals('1.234,619', $filter->filter('1.234,619'));
+        $this->assertEquals('1.234,1 €', $filter->filter('1.234,1 €'));
+
+        // Allowed
+        $this->assertEquals(1234.10, $filter->filter('1.234,10 €'));
 
         // (3) currency symbol (and correct formatting) required
-        $filter->setCurrencyMandatory(true);
+        $filter->setCurrencyObligatoriness(true);
 
         // No more allowed
         $this->assertEquals('1234,61', $filter->filter('1234,61'));

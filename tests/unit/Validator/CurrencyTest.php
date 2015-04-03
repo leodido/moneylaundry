@@ -45,7 +45,7 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
         $validator = new CurrencyValidator;
         $this->assertEquals('en_US', $validator->getLocale());
         $this->assertEquals(
-            Uncurrency::DEFAULT_FRACTION_DIGITS_OBLIGATORINESS,
+            Uncurrency::DEFAULT_SCALE_CORRECTNESS,
             $validator->isFractionDigitsMandatory()
         );
         $this->assertEquals(

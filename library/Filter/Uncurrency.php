@@ -21,12 +21,12 @@ use Zend\Stdlib\StringUtils;
  *
  * The filtering process can be tuned according to the user preferences and needs:
  * - it can accept amounts formatted according to the locale pattern but WITH a currency different from the default one
+ * - it can accept amounts whose number of decimal places (i.e., the scale) does NOT match that specified by the locale
  * - it can accept amounts WITHOUT the currency (symbol, code, or display names) // FIXME: display names?
- * - it can accept amounts whose number of decimal places does NOT match the one specified by the locale pattern
  */
 class Uncurrency extends AbstractLocale
 {
-    const DEFAULT_FRACTION_DIGITS_OBLIGATORINESS = true;
+    const DEFAULT_SCALE_CORRECTNESS = true;
     const DEFAULT_CURRENCY_OBLIGATORINESS = true;
     // const DEFAULT_CURRENCY_CODE = null;  // FIXME: feature(currencycode)
 
@@ -41,18 +41,27 @@ class Uncurrency extends AbstractLocale
     const CURRENCY_SYMBOL = 1005;
     const SEPARATOR_SYMBOL = 1006;
     const GROUP_SEPARATOR_SYMBOL = 1007;
-    // TODO: implement
     const INFINITY_SYMBOL = 1008;
     const NAN_SYMBOL = 1009;
 
     /**
+     * Default options
+     *
+     * Meanings:
+     * - Key 'locale' contains the locale string (e.g., <language>[_<country>][.<charset>]) you desire
+     * - Key 'scale_correctness' contains a boolean value indicating
+     *   if the scale (i.e., the number of digits to the right of the decimal point in a number) have to match
+     *   the scale specified by the pattern of the current locale
+     * - Key 'currency_obligatoriness' contains a boolean value indicating
+     *   if the presence of the currency is mandatory or not
+     *
      * @var array
      */
     protected $options = [
         'locale' => null,
         // 'currency_code' => self::DEFAULT_CURRENCY_CODE, // FIXME: feature(currencycode)
-        'fraction_digits_mandatory' => self::DEFAULT_FRACTION_DIGITS_OBLIGATORINESS,
-        'currency_mandatory' => self::DEFAULT_CURRENCY_OBLIGATORINESS
+        'scale_correctness' => self::DEFAULT_SCALE_CORRECTNESS,
+        'currency_obligatoriness' => self::DEFAULT_CURRENCY_OBLIGATORINESS
     ];
 
     /**
@@ -83,7 +92,7 @@ class Uncurrency extends AbstractLocale
     public function __construct(
         $localeOrOptions = null,
         // $currencyCode = self::DEFAULT_CURRENCY_CODE, // FIXME: feature(currencycode)
-        $fractionDigitsMandatory = self::DEFAULT_FRACTION_DIGITS_OBLIGATORINESS,
+        $fractionDigitsMandatory = self::DEFAULT_SCALE_CORRECTNESS,
         $currencySymbolMandatory = self::DEFAULT_CURRENCY_OBLIGATORINESS
     ) {
         parent::__construct();
@@ -102,8 +111,8 @@ class Uncurrency extends AbstractLocale
             } else {
                 $this->setLocale($localeOrOptions);
                 // $this->setCurrencyCode($currencyCode); // FIXME: feature(currencycode)
-                $this->setFractionDigitsMandatory($fractionDigitsMandatory);
-                $this->setCurrencyMandatory($currencySymbolMandatory);
+                $this->setScaleCorrectness($fractionDigitsMandatory);
+                $this->setCurrencyObligatoriness($currencySymbolMandatory);
             }
         }
     }
@@ -259,9 +268,9 @@ class Uncurrency extends AbstractLocale
      * @param  bool $exactFractionDigits
      * @return $this
      */
-    public function setFractionDigitsMandatory($exactFractionDigits)
+    public function setScaleCorrectness($exactFractionDigits)
     {
-        $this->options['fraction_digits_mandatory'] = (bool) $exactFractionDigits;
+        $this->options['scale_correctness'] = (bool) $exactFractionDigits;
         return $this;
     }
 
@@ -271,9 +280,9 @@ class Uncurrency extends AbstractLocale
      * @param $currencySymbolMandatory
      * @return $this
      */
-    public function setCurrencyMandatory($currencySymbolMandatory)
+    public function setCurrencyObligatoriness($currencySymbolMandatory)
     {
-        $this->options['currency_mandatory'] = (bool) $currencySymbolMandatory;
+        $this->options['currency_obligatoriness'] = (bool) $currencySymbolMandatory;
         return $this;
     }
 
@@ -282,9 +291,9 @@ class Uncurrency extends AbstractLocale
      *
      * @return bool
      */
-    public function isFractionDigitsMandatory()
+    public function getScaleCorrectness()
     {
-        return $this->options['fraction_digits_mandatory'];
+        return $this->options['scale_correctness'];
     }
 
     /**
@@ -292,9 +301,9 @@ class Uncurrency extends AbstractLocale
      * 
      * @return bool
      */
-    public function isCurrencyMandatory()
+    public function getCurrencyObligatoriness()
     {
-        return $this->options['currency_mandatory'];
+        return $this->options['currency_obligatoriness'];
     }
 
     /**
@@ -312,11 +321,6 @@ class Uncurrency extends AbstractLocale
 
             // Replace spaces with NBSP (non breaking spaces)
             $value = str_replace("\x20", "\xC2\xA0", $value);
-
-            // Force NAN handling because sometimes NumberFormatter parse it correclty ('NaN'), sometimes not
-            if ($this->getSymbol(self::NAN_SYMBOL) === $value) {
-                return NAN; // Return the double NAN
-            }
 
             // Get decimal place info
             $numFractionDigits = $this->getSymbol(self::FRACTION_DIGITS);
@@ -342,16 +346,22 @@ class Uncurrency extends AbstractLocale
                     return $unfilteredValue;
                 }
                 // Check if the number of decimal digits match the requirement
-                if ($this->isFractionDigitsMandatory() && $numDecimals !== $numFractionDigits) {
+                if ($this->getScaleCorrectness() && $numDecimals !== $numFractionDigits) {
                     return $unfilteredValue;
                 }
 
                 return $result;
             }
-            // At this stage input is not a well-formatted currency
+
+            // NAN handling
+            if ($this->getSymbol(self::NAN_SYMBOL) === $value) {
+                return NAN; // Return the double NAN
+            }
+
+            // At this stage result is FALSE and input probably is not a well-formatted currency
 
             // Check if the currency symbol is mandatory
-            if ($this->isCurrencyMandatory()) {
+            if ($this->getCurrencyObligatoriness()) {
                 ErrorHandler::stop();
                 return $unfilteredValue;
             }
@@ -370,7 +380,7 @@ class Uncurrency extends AbstractLocale
                 $decimal = \NumberFormatter::create($this->getLocale(), \NumberFormatter::DECIMAL);
 
                 // Check if the number of decimal digits match the requirement
-                if ($this->isFractionDigitsMandatory() && $numDecimals !== $numFractionDigits) {
+                if ($this->getScaleCorrectness() && $numDecimals !== $numFractionDigits) {
                     return $unfilteredValue;
                 }
 

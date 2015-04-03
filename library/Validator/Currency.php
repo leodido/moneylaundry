@@ -49,7 +49,7 @@ class Currency extends AbstractValidator
      * Fraction digit obligatoriness option
      * @var bool
      */
-    protected $fractionDigitsMandatory = Uncurrency::DEFAULT_FRACTION_DIGITS_OBLIGATORINESS;
+    protected $fractionDigitsMandatory = Uncurrency::DEFAULT_SCALE_CORRECTNESS;
 
     /**
      * Set whether to check or not that the number of decimal places is as requested by current locale pattern
