@@ -313,6 +313,11 @@ class Uncurrency extends AbstractLocale
             // Replace spaces with NBSP (non breaking spaces)
             $value = str_replace("\x20", "\xC2\xA0", $value);
 
+            // Force NAN handling because sometimes NumberFormatter parse it correclty ('NaN'), sometimes not
+            if ($this->getSymbol(self::NAN_SYMBOL) === $value) {
+                return NAN; // Return the double NAN
+            }
+
             // Get decimal place info
             $numFractionDigits = $this->getSymbol(self::FRACTION_DIGITS);
             $numDecimals = $this->countDecimalDigits($value);

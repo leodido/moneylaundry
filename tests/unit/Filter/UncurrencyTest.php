@@ -267,33 +267,27 @@ class UncurrencyTest extends AbstractTest
         $initializeMethod = $class->getMethod('initialize');
         $initializeMethod->setAccessible(true);
 
-
-        $filter = new Uncurrency('ar_AE', false, false); // ar_AE, ar_BH, ar_EG
-        var_dump($filter->getLocale());
+        $filter = new Uncurrency('ar_AE');
         $formatter = $filter->getFormatter();
         $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
+        $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "ليس رقم"
 
-        var_dump($filter->getSymbol(Uncurrency::NAN_SYMBOL));
-        var_dump($formatter->formatCurrency(NAN, 'EUR'));
-        var_dump($formatter->format(NAN)); // 'ليس رقم'
-        var_dump($formatter->format(NAN) === $filter->getSymbol(Uncurrency::NAN_SYMBOL)); // 'ليس رقم'
-        var_dump($filter->filter($formatter->format(NAN)));
-
-        $filter->setLocale('ja_JP');
-        var_dump($filter->getLocale());
+        $filter->setLocale('bn_IN');
         $formatter = $filter->getFormatter();
         $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
+        $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "সংখ্যা না"
 
-        var_dump($filter->getSymbol(Uncurrency::NAN_SYMBOL));
-        var_dump($formatter->formatCurrency(NAN, 'EUR'));
-        var_dump($formatter->format(NAN)); // 'ليس رقم'
-        var_dump($formatter->format(NAN) === $filter->getSymbol(Uncurrency::NAN_SYMBOL)); // 'ليس رقم'
-        var_dump($filter->filter($formatter->format(NAN)));
+        $filter->setLocale('it_IT');
+        $formatter = $filter->getFormatter();
+        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
+        $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "NaN"
+
+        $filter->setLocale('ru_RU');
+        $formatter = $filter->getFormatter();
+        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
+        $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "не число"
 
         $initializeMethod->setAccessible(false);
-
-//        var_dump($formatter->format(INF));
-//        var_dump($filter->filter($formatter->format(INF))); // د.إ.‏ ∞
     }
 
     public function testFilter()
