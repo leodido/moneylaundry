@@ -6,15 +6,12 @@
  * @copyright   Copyright (c) 2015, Leo Di Donato
  * @license     http://opensource.org/licenses/MIT      MIT license
  */
-namespace MoneyLaundryUnitTest\Filter;
-
-use MoneyLaundry\Filter\Currency as CurrencyFilter;
+namespace MoneyLaundryUnitTest;
 
 /**
- * Class CurrencyTest
- * @group filters
+ * Class AbstractTest
  */
-class CurrencyTest extends \PHPUnit_Framework_TestCase
+abstract class AbstractTest extends \PHPUnit_Framework_TestCase
 {
     protected $defaultLocale;
 
@@ -34,16 +31,5 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
     public function tearDown()
     {
         ini_set('intl.default_locale', $this->defaultLocale);
-    }
-
-    public function testJustATry()
-    {
-        $filter = new CurrencyFilter;
-
-        $this->assertEquals('1.234,61 €', $filter->filter(1234.61));
-        $this->assertEquals('1.234,61 €', $filter->filter('1234,61'));
-        // FIXME? input '1234.61'
-        $this->assertEquals('1E10', $filter->filter('1E10'));
-        $this->assertEquals('1.5E10', $filter->filter('1.5E10'));
     }
 }

@@ -9,71 +9,55 @@
 namespace MoneyLaundryUnitTest\Filter;
 
 use MoneyLaundry\Filter\Uncurrency;
+use MoneyLaundryUnitTest\AbstractTest;
 use Zend\Stdlib\StringUtils;
 
 /**
  * Class UncurrencyTest
- * @group filters
  */
-class UncurrencyTest extends \PHPUnit_Framework_TestCase
+class UncurrencyTest extends AbstractTest
 {
-    protected $defaultLocale;
-
-    public function setUp()
-    {
-        if (!extension_loaded('mbstring')) {
-            $this->markTestSkipped('The mbstring extension is not installed/enabled');
-        }
-        //
-        $this->defaultLocale = ini_get('intl.default_locale');
-        ini_set('intl.default_locale', 'en_US');
-    }
-
-    public function tearDown()
-    {
-        ini_set('intl.default_locale', $this->defaultLocale);
-    }
 
     public function testCtor()
     {
         $filter = new Uncurrency();
         $this->assertEquals('en_US', $filter->getLocale());
         $this->assertEquals(Uncurrency::DEFAULT_FRACTION_DIGITS_OBLIGATORINESS, $filter->isFractionDigitsMandatory());
-        $this->assertEquals(Uncurrency::DEFAULT_CURRENCY_SYMBOL_OBLIGATORINESS, $filter->isCurrencySymbolMandatory());
+        $this->assertEquals(Uncurrency::DEFAULT_CURRENCY_OBLIGATORINESS, $filter->isCurrencyMandatory());
 
         $filter = new Uncurrency('it_IT');
         $this->assertEquals('it_IT', $filter->getLocale());
         $this->assertEquals(Uncurrency::DEFAULT_FRACTION_DIGITS_OBLIGATORINESS, $filter->isFractionDigitsMandatory());
-        $this->assertEquals(Uncurrency::DEFAULT_CURRENCY_SYMBOL_OBLIGATORINESS, $filter->isCurrencySymbolMandatory());
+        $this->assertEquals(Uncurrency::DEFAULT_CURRENCY_OBLIGATORINESS, $filter->isCurrencyMandatory());
 
         $filter = new Uncurrency('it_IT', false, false);
         $this->assertEquals('it_IT', $filter->getLocale());
         $this->assertFalse($filter->isFractionDigitsMandatory());
-        $this->assertFalse($filter->isCurrencySymbolMandatory());
+        $this->assertFalse($filter->isCurrencyMandatory());
 
         $filter = new Uncurrency('it_IT', true, false);
         $this->assertEquals('it_IT', $filter->getLocale());
         $this->assertTrue($filter->isFractionDigitsMandatory());
-        $this->assertFalse($filter->isCurrencySymbolMandatory());
+        $this->assertFalse($filter->isCurrencyMandatory());
 
         $filter = new Uncurrency('it_IT', false, true);
         $this->assertEquals('it_IT', $filter->getLocale());
         $this->assertFalse($filter->isFractionDigitsMandatory());
-        $this->assertTrue($filter->isCurrencySymbolMandatory());
+        $this->assertTrue($filter->isCurrencyMandatory());
 
         $filter = new Uncurrency('it_IT', true, true);
         $this->assertEquals('it_IT', $filter->getLocale());
         $this->assertTrue($filter->isFractionDigitsMandatory());
-        $this->assertTrue($filter->isCurrencySymbolMandatory());
+        $this->assertTrue($filter->isCurrencyMandatory());
 
         $filter = new Uncurrency([
             'locale' => 'it_IT',
             'fraction_digits_mandatory' => false,
-            'currency_symbol_mandatory' => false
+            'currency_mandatory' => false
         ]);
         $this->assertEquals('it_IT', $filter->getLocale());
         $this->assertFalse($filter->isFractionDigitsMandatory());
-        $this->assertFalse($filter->isCurrencySymbolMandatory());
+        $this->assertFalse($filter->isCurrencyMandatory());
     }
 
     public function testSetFormatter()
@@ -97,11 +81,11 @@ class UncurrencyTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($filter->getLocale(), 'it_IT');
     }
 
-    public function testCurrencySymbolMandatoryOption()
+    public function testCurrencyMandatoryOption()
     {
         $filter = new Uncurrency;
-        $this->assertInstanceOf('MoneyLaundry\Filter\Uncurrency', $filter->setCurrencySymbolMandatory(false));
-        $this->assertFalse($filter->isCurrencySymbolMandatory());
+        $this->assertInstanceOf('MoneyLaundry\Filter\Uncurrency', $filter->setCurrencyMandatory(false));
+        $this->assertFalse($filter->isCurrencyMandatory());
     }
 
     public function testFractionDigitsMandatoryOption()
@@ -153,6 +137,14 @@ class UncurrencyTest extends \PHPUnit_Framework_TestCase
             $formatter->getSymbol(\NumberFormatter::MONETARY_SEPARATOR_SYMBOL),
             $filter->getSymbol(Uncurrency::SEPARATOR_SYMBOL)
         );
+        $this->assertEquals(
+            $formatter->getSymbol(\NumberFormatter::INFINITY_SYMBOL),
+            $filter->getSymbol(Uncurrency::INFINITY_SYMBOL)
+        );
+        $this->assertEquals(
+            $formatter->getSymbol(\NumberFormatter::NAN_SYMBOL),
+            $filter->getSymbol(Uncurrency::NAN_SYMBOL)
+        );
 
         if (StringUtils::hasPcreUnicodeSupport()) {
             $this->assertEquals(
@@ -164,6 +156,10 @@ class UncurrencyTest extends \PHPUnit_Framework_TestCase
                 $filter->getRegexComponent(Uncurrency::REGEX_NUMBERS)
             );
         } else {
+            $this->assertEquals(
+                '',
+                $filter->getRegexComponent(Uncurrency::REGEX_FLAGS)
+            );
             $this->assertEquals(
                 '0-9',
                 $filter->getRegexComponent(Uncurrency::REGEX_NUMBERS)
@@ -191,24 +187,136 @@ class UncurrencyTest extends \PHPUnit_Framework_TestCase
         $filter->getRegexComponent(-1);
     }
 
+    public function testSetFormatterShouldTeardownSettings()
+    {
+        $mock = $this->getMock('MoneyLaundry\Filter\Uncurrency', ['teardown']);
+        $mock->expects($this->once())
+             ->method('teardown');
+        /** @var $mock \MoneyLaundry\Filter\Uncurrency */
+        $mock->setFormatter(\NumberFormatter::create('it_IT', \NumberFormatter::CURRENCY));
+    }
+
+    public function testSetLocaleShouldTeardownSettings()
+    {
+        $mock = $this->getMock('MoneyLaundry\Filter\Uncurrency', ['teardown']);
+        $mock->expects($this->once())
+            ->method('teardown');
+        /** @var $mock \MoneyLaundry\Filter\Uncurrency */
+        $mock->setLocale('en_US');
+    }
+
+    public function testChangeLocaleOnFly()
+    {
+        // Change initialize() protected method accessibility
+        $class = new \ReflectionClass('MoneyLaundry\Filter\Uncurrency');
+        $initializeMethod = $class->getMethod('initialize');
+        $initializeMethod->setAccessible(true);
+
+        // Store symbols and regex components from it_IT
+        $itLocale = 'it_IT';
+        $itFilter = new Uncurrency($itLocale);
+        $initializeMethod->invoke($itFilter); // enforce init
+        $itOpts = $itFilter->getOptions();
+        $itSymbols = $itFilter->getSymbols();
+        $itRegexComponents = $itFilter->getRegexComponents();
+        $itFormatter = $itFilter->getFormatter();
+        // Store symbols and regex components from ar_AE
+        $aeLocale = 'ar_AE';
+        $aeFilter = new Uncurrency($aeLocale);
+        $initializeMethod->invoke($aeFilter); // enforce init
+        $aeOpts = $aeFilter->getOptions();
+        $aeSymbols = $aeFilter->getSymbols();
+        $aeRegexComponents = $aeFilter->getRegexComponents();
+        $aeFormatter = $aeFilter->getFormatter();
+
+        // We instantiate a single filter
+        $filter = new Uncurrency();
+        $filter->setLocale('it_IT');
+        $initializeMethod->invoke($filter); // enforce init
+        $this->assertEquals($itLocale, $filter->getLocale());
+        $this->assertEquals($itSymbols, $filter->getSymbols());
+        $this->assertEquals($itRegexComponents, $filter->getRegexComponents());
+        $this->assertEquals($itFormatter, $filter->getFormatter());
+        $this->assertEquals($itOpts, $filter->getOptions());
+        // Now we change its locale on fly
+        $filter->setLocale('ar_AE');
+        $initializeMethod->invoke($filter); // enforce init
+        $this->assertEquals($aeLocale, $filter->getLocale());
+        $this->assertEquals($aeSymbols, $filter->getSymbols());
+        $this->assertEquals($aeRegexComponents, $filter->getRegexComponents());
+        $this->assertEquals($aeFormatter, $filter->getFormatter());
+        $this->assertEquals($aeOpts, $filter->getOptions());
+    }
+
+    public function testTryingToFilterNotAllowedInputsShouldSilentlyReturnThem()
+    {
+        $filter = new Uncurrency('it_IT');
+        $this->assertEquals([], $filter->filter([]));
+        $this->assertEquals(2, $filter->filter(2));
+        $this->assertEquals(3.14, $filter->filter(3.14));
+        $this->assertEquals(true, $filter->filter(true));
+    }
+
+    public function testFiltersInfinityValues()
+    {
+    }
+
+    public function testFiltersNaNValues()
+    {
+        $class = new \ReflectionClass('MoneyLaundry\Filter\Uncurrency');
+        $initializeMethod = $class->getMethod('initialize');
+        $initializeMethod->setAccessible(true);
+
+
+        $filter = new Uncurrency('ar_AE', false, false); // ar_AE, ar_BH, ar_EG
+        var_dump($filter->getLocale());
+        $formatter = $filter->getFormatter();
+        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
+
+        var_dump($filter->getSymbol(Uncurrency::NAN_SYMBOL));
+        var_dump($formatter->formatCurrency(NAN, 'EUR'));
+        var_dump($formatter->format(NAN)); // 'ليس رقم'
+        var_dump($formatter->format(NAN) === $filter->getSymbol(Uncurrency::NAN_SYMBOL)); // 'ليس رقم'
+        var_dump($filter->filter($formatter->format(NAN)));
+
+        $filter->setLocale('ja_JP');
+        var_dump($filter->getLocale());
+        $formatter = $filter->getFormatter();
+        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
+
+        var_dump($filter->getSymbol(Uncurrency::NAN_SYMBOL));
+        var_dump($formatter->formatCurrency(NAN, 'EUR'));
+        var_dump($formatter->format(NAN)); // 'ليس رقم'
+        var_dump($formatter->format(NAN) === $filter->getSymbol(Uncurrency::NAN_SYMBOL)); // 'ليس رقم'
+        var_dump($filter->filter($formatter->format(NAN)));
+
+        $initializeMethod->setAccessible(false);
+
+//        var_dump($formatter->format(INF));
+//        var_dump($filter->filter($formatter->format(INF))); // د.إ.‏ ∞
+    }
+
     public function testFilter()
     {
-        // (1) italian - italy, (2) correct number of decimal places not mandatory, (3) currency symbol not mandatory
+        // (1) italian - italy, (2) correct number of decimal places not mandatory, (3) currency not mandatory
         $filter = new Uncurrency('it_IT', false, false);
-        $this->assertEquals(123, $filter->filter(123));
+        $formatter = $filter->getFormatter();
 
         // Allowed
-        $this->assertEquals(1234.61, $filter->filter('1.234,61 €'));
+        $this->assertEquals(123, $filter->filter($formatter->format(123))); // 1.234,61 €'
+        $this->assertEquals(1234.61, $filter->filter($formatter->format(1234.61))); // 1.234,61 €
         $this->assertEquals(1234.61, $filter->filter('1.234,61€'));
         $this->assertEquals(1234.61, $filter->filter('1.234,61'));
         $this->assertEquals(1234.61, $filter->filter('1234,61'));
-
-        // $this->assertEquals(1234.61, $filter->filter('1234,61 EUR')); // FIXME: does not work with ICU 4.8.1.1
 
         $this->assertEquals(1234.61, $filter->filter('1234,61 EURO'));
         $this->assertEquals(1234.619, $filter->filter('1234,619'));
         $this->assertEquals(1234.619, $filter->filter('1234,619 €'));
         $this->assertEquals(-0.01, $filter->filter('-0,01€'));
+
+        if (version_compare($GLOBALS['INTL_ICU_VERSION'], '4.8.1.1') > 0) {
+            $this->assertEquals(1234.61, $filter->filter('1234,61 EUR')); // Because of (3)
+        }
 
         // Not allowed
         $this->assertEquals('1234,61 EUROOO', $filter->filter('1234,61 EUROOO'));
@@ -222,23 +330,27 @@ class UncurrencyTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('1.234,619', $filter->filter('1.234,619'));
 
         // (3) currency symbol (and correct formatting) required
-        $filter->setCurrencySymbolMandatory(true);
+        $filter->setCurrencyMandatory(true);
 
         // No more allowed
         $this->assertEquals('1234,61', $filter->filter('1234,61'));
         $this->assertEquals('1234,61€', $filter->filter('1234,61€'));
 
         // Allowed
-        $this->assertEquals(1234.61, $filter->filter('1234,61 €'));
-        $this->assertEquals(-0.01, $filter->filter('-0,01 €'));
+        $this->assertEquals(1234.61, $filter->filter($formatter->format(1234.61))); // 1234,61 €
+        $this->assertEquals(-0.01, $filter->filter($formatter->format(-0.01))); // -0,01 €
 
-        // bengali - bangladesh, (2) correct number of decimal places not mandatory, (3) currency symbol not mandatory
+        // bengali - bangladesh, (2) correct number of decimal places not mandatory, (3) currency not mandatory
         $filter = new Uncurrency('bn_BD', false, false);
+        $formatter = $filter->getFormatter();
 
         // Allowed
+        $this->assertEquals(0, $filter->filter($formatter->format(0))); // '০.০০৳' (w/ currency symbol)
         $this->assertEquals(0, $filter->filter('০.০'));
+        $this->assertEquals(0.01, $filter->filter($formatter->format(0.01))); // '০.০১৳' (w/ currency simbol)
         $this->assertEquals(0.01, $filter->filter('০.০১০'));
         $this->assertEquals(0, $filter->filter('(০.০)'));
+        $this->assertEquals(-0.01, $filter->filter($formatter->format(-0.01))); // (০.০১৳) (w/ currency symbol)
         $this->assertEquals(-0.01, $filter->filter('(০.০১)'));
     }
 }

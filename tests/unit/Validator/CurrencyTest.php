@@ -49,7 +49,7 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
             $validator->isFractionDigitsMandatory()
         );
         $this->assertEquals(
-            Uncurrency::DEFAULT_CURRENCY_SYMBOL_OBLIGATORINESS,
+            Uncurrency::DEFAULT_CURRENCY_OBLIGATORINESS,
             $validator->isCurrencySymbolMandatory()
         );
         $this->assertEquals(CurrencyValidator::DEFAULT_NEGATIVE_ALLOWED, $validator->isNegativeAllowed());

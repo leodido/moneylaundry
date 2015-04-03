@@ -6,14 +6,16 @@
  * @copyright   Copyright (c) 2015, Leo Di Donato
  * @license     http://opensource.org/licenses/MIT      MIT license
  */
-chdir(__DIR__);
-if (!file_exists('../vendor/autoload.php')) {
+if (!file_exists('vendor/autoload.php')) {
     throw new \RuntimeException('vendor/autoload.php not found. Run a composer install.');
 }
 
+$GLOBALS['INTL_EXT_VERSION'] = phpversion('intl');
+$GLOBALS['INTL_ICU_VERSION'] = constant('INTL_ICU_VERSION');
+
 echo 'Settings:' . PHP_EOL;
-echo sprintf('intl: %s', phpversion('intl')) . PHP_EOL;
-echo sprintf('icu: %s', constant('INTL_ICU_VERSION')) . PHP_EOL;
+echo sprintf('intl: %s', $GLOBALS['INTL_EXT_VERSION']) . PHP_EOL;
+echo sprintf('icu: %s', $GLOBALS['INTL_ICU_VERSION']) . PHP_EOL;
 echo sprintf('LC_MONETARY: %s', setlocale(LC_MONETARY, '0')) . PHP_EOL;
 echo sprintf('LC_NUMERIC: %s', setlocale(LC_NUMERIC, '0')) . PHP_EOL;
 echo PHP_EOL;

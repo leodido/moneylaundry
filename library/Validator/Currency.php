@@ -77,7 +77,7 @@ class Currency extends AbstractValidator
      * Currency symbol obligatoriness option
      * @var bool
      */
-    protected $currencySymbolMandatory = Uncurrency::DEFAULT_CURRENCY_SYMBOL_OBLIGATORINESS;
+    protected $currencySymbolMandatory = Uncurrency::DEFAULT_CURRENCY_OBLIGATORINESS;
 
     /**
      * Set whether the currency symbol is mandatory or not

@@ -19,14 +19,16 @@ use Zend\Stdlib\StringUtils;
  * Given a string containing a well-formatted currency (according to the chosen locale) it extracts the amount,
  * otherwise it return the input value.
  *
- * The filtering process can be tuned according to the user preferences and needs.
- * Infact it can also accept amounts without the currency symbol and/or
- * amounts whose number of decimal places does not match the one specified by the locale pattern.
+ * The filtering process can be tuned according to the user preferences and needs:
+ * - it can accept amounts formatted according to the locale pattern but WITH a currency different from the default one
+ * - it can accept amounts WITHOUT the currency (symbol, code, or display names) // FIXME: display names?
+ * - it can accept amounts whose number of decimal places does NOT match the one specified by the locale pattern
  */
 class Uncurrency extends AbstractLocale
 {
     const DEFAULT_FRACTION_DIGITS_OBLIGATORINESS = true;
-    const DEFAULT_CURRENCY_SYMBOL_OBLIGATORINESS = true;
+    const DEFAULT_CURRENCY_OBLIGATORINESS = true;
+    // const DEFAULT_CURRENCY_CODE = null;  // FIXME: feature(currencycode)
 
     const REGEX_NUMBERS = 0;
     const REGEX_FLAGS = 1;
@@ -39,14 +41,18 @@ class Uncurrency extends AbstractLocale
     const CURRENCY_SYMBOL = 1005;
     const SEPARATOR_SYMBOL = 1006;
     const GROUP_SEPARATOR_SYMBOL = 1007;
+    // TODO: implement
+    const INFINITY_SYMBOL = 1008;
+    const NAN_SYMBOL = 1009;
 
     /**
      * @var array
      */
     protected $options = [
         'locale' => null,
+        // 'currency_code' => self::DEFAULT_CURRENCY_CODE, // FIXME: feature(currencycode)
         'fraction_digits_mandatory' => self::DEFAULT_FRACTION_DIGITS_OBLIGATORINESS,
-        'currency_symbol_mandatory' => self::DEFAULT_CURRENCY_SYMBOL_OBLIGATORINESS
+        'currency_mandatory' => self::DEFAULT_CURRENCY_OBLIGATORINESS
     ];
 
     /**
@@ -76,8 +82,9 @@ class Uncurrency extends AbstractLocale
      */
     public function __construct(
         $localeOrOptions = null,
+        // $currencyCode = self::DEFAULT_CURRENCY_CODE, // FIXME: feature(currencycode)
         $fractionDigitsMandatory = self::DEFAULT_FRACTION_DIGITS_OBLIGATORINESS,
-        $currencySymbolMandatory = self::DEFAULT_CURRENCY_SYMBOL_OBLIGATORINESS
+        $currencySymbolMandatory = self::DEFAULT_CURRENCY_OBLIGATORINESS
     ) {
         parent::__construct();
         // @codeCoverageIgnoreStart
@@ -94,12 +101,16 @@ class Uncurrency extends AbstractLocale
                 $this->setOptions($localeOrOptions);
             } else {
                 $this->setLocale($localeOrOptions);
+                // $this->setCurrencyCode($currencyCode); // FIXME: feature(currencycode)
                 $this->setFractionDigitsMandatory($fractionDigitsMandatory);
-                $this->setCurrencySymbolMandatory($currencySymbolMandatory);
+                $this->setCurrencyMandatory($currencySymbolMandatory);
             }
         }
     }
 
+    /**
+     * Initialize settings.
+     */
     protected function initialize()
     {
         if (!$this->isInitialized) {
@@ -112,6 +123,17 @@ class Uncurrency extends AbstractLocale
             $this->initRegexComponents();
             $this->isInitialized = true;
         }
+    }
+
+    /**
+     * Teardown settings.
+     */
+    protected function teardown()
+    {
+        $this->formatter = null;
+        $this->isInitialized = false;
+        $this->symbols = [];
+        $this->regexComponents = [];
     }
 
     /**
@@ -131,21 +153,27 @@ class Uncurrency extends AbstractLocale
             $this->symbols[self::SEPARATOR_SYMBOL] = $f->getSymbol(
                 \NumberFormatter::MONETARY_SEPARATOR_SYMBOL
             );
+            $this->symbols[self::INFINITY_SYMBOL] = $f->getSymbol(\NumberFormatter::INFINITY_SYMBOL);
+            $this->symbols[self::NAN_SYMBOL] = $f->getSymbol(\NumberFormatter::NAN_SYMBOL);
+            // FIXME? remove currency symbol from pattern is needed
             $this->symbols[self::POSITIVE_PREFIX] = str_replace(
                 $this->symbols[self::CURRENCY_SYMBOL],
                 '',
                 $f->getTextAttribute(\NumberFormatter::POSITIVE_PREFIX)
             );
+            // FIXME? remove currency symbol from pattern is needed
             $this->symbols[self::POSITIVE_SUFFIX] = str_replace(
                 $this->symbols[self::CURRENCY_SYMBOL],
                 '',
                 $f->getTextAttribute(\NumberFormatter::POSITIVE_SUFFIX)
             );
+            // FIXME? remove currency symbol from pattern is needed
             $this->symbols[self::NEGATIVE_PREFIX] = str_replace(
                 $this->symbols[self::CURRENCY_SYMBOL],
                 '',
                 $f->getTextAttribute(\NumberFormatter::NEGATIVE_PREFIX)
             );
+            // FIXME? remove currency symbol from pattern is needed
             $this->symbols[self::NEGATIVE_SUFFIX] = str_replace(
                 $this->symbols[self::CURRENCY_SYMBOL],
                 '',
@@ -186,8 +214,8 @@ class Uncurrency extends AbstractLocale
      */
     public function setFormatter(\NumberFormatter $formatter)
     {
+        $this->teardown();
         $this->formatter = $formatter;
-        $this->isInitialized = false;
 
         return $this;
     }
@@ -214,10 +242,16 @@ class Uncurrency extends AbstractLocale
      */
     public function setLocale($locale = null)
     {
-        $this->formatter = null;
-        $this->isInitialized = false;
+        $this->teardown();
         return parent::setLocale($locale);
     }
+
+    // FIXME: feature(currencycode)
+    // public function setCurrencyCode($currencyCode)
+    // {
+    //     $this->options['currency_code'] = $currencyCode;
+    //     return $this;
+    // }
 
     /**
      * Set whether to check or not that the number of decimal places is as requested by current locale pattern
@@ -237,9 +271,9 @@ class Uncurrency extends AbstractLocale
      * @param $currencySymbolMandatory
      * @return $this
      */
-    public function setCurrencySymbolMandatory($currencySymbolMandatory)
+    public function setCurrencyMandatory($currencySymbolMandatory)
     {
-        $this->options['currency_symbol_mandatory'] = (bool) $currencySymbolMandatory;
+        $this->options['currency_mandatory'] = (bool) $currencySymbolMandatory;
         return $this;
     }
 
@@ -258,9 +292,9 @@ class Uncurrency extends AbstractLocale
      * 
      * @return bool
      */
-    public function isCurrencySymbolMandatory()
+    public function isCurrencyMandatory()
     {
-        return $this->options['currency_symbol_mandatory'];
+        return $this->options['currency_mandatory'];
     }
 
     /**
@@ -276,7 +310,7 @@ class Uncurrency extends AbstractLocale
             $this->initialize();
             $unfilteredValue = $value;
 
-            // Replace spaces with non breaking spaces
+            // Replace spaces with NBSP (non breaking spaces)
             $value = str_replace("\x20", "\xC2\xA0", $value);
 
             // Get decimal place info
@@ -292,6 +326,12 @@ class Uncurrency extends AbstractLocale
             // Input is a valid currency?
             if ($result !== false) {
                 ErrorHandler::stop();
+                // FIXME: feature(currencycode)
+                // Check that detect currency matches with specified currency
+                // if ($this->isCurrencySymbolMandatory() && $isoCyrrencySym !== $this->getCurrencyCode()) {
+                //    return $unfilteredValue;
+                // }
+
                 // Check if the parsing finished before the end of the input
                 if ($position !== mb_strlen($value, 'UTF-8')) {
                     return $unfilteredValue;
@@ -306,7 +346,7 @@ class Uncurrency extends AbstractLocale
             // At this stage input is not a well-formatted currency
 
             // Check if the currency symbol is mandatory
-            if ($this->isCurrencySymbolMandatory()) {
+            if ($this->isCurrencyMandatory()) {
                 ErrorHandler::stop();
                 return $unfilteredValue;
             }
