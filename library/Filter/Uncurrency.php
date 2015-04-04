@@ -24,7 +24,7 @@ use Zend\Stdlib\StringUtils;
  * - it can accept amounts whose number of decimal places (i.e., the scale) does NOT match that specified by the locale
  * - it can accept amounts WITHOUT the currency (symbol, code, or display names) // FIXME: display names?
  */
-class Uncurrency extends AbstractLocale
+class Uncurrency extends AbstractFilter
 {
     const DEFAULT_SCALE_CORRECTNESS = true;
     const DEFAULT_CURRENCY_OBLIGATORINESS = true;
@@ -64,11 +64,6 @@ class Uncurrency extends AbstractLocale
         'scale_correctness' => self::DEFAULT_SCALE_CORRECTNESS,
         'currency_obligatoriness' => self::DEFAULT_CURRENCY_OBLIGATORINESS
     ];
-
-    /**
-     * @var \NumberFormatter
-     */
-    protected $formatter = null;
 
     /**
      * @var array
@@ -228,25 +223,8 @@ class Uncurrency extends AbstractLocale
     public function setFormatter(\NumberFormatter $formatter)
     {
         $this->teardown();
-        $this->formatter = $formatter;
 
-        return $this;
-    }
-
-    /**
-     * Retrieve (and lazy load) the number formatter
-     *
-     * @return \NumberFormatter
-     */
-    public function getFormatter()
-    {
-        if ($this->formatter === null) {
-            // FIXME: assign created formatted to a var
-            // FIXME: throw exception if !$formatter
-            $this->setFormatter(\NumberFormatter::create($this->getLocale(), \NumberFormatter::CURRENCY));
-        }
-
-        return $this->formatter;
+        return parent::setFormatter($formatter);
     }
 
     /**

@@ -18,7 +18,7 @@ use Zend\I18n\Filter\NumberFormat;
  * Given an integer and a locale it returns the corresponding well-formatted currency amount.
  * TODO: complete (dominio-codominio, NAN, INF, exponential notation)
  */
-class Currency extends AbstractLocale
+class Currency extends AbstractFilter
 {
     /**
      * Default options
