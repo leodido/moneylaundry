@@ -70,11 +70,9 @@ class Currency extends AbstractFilter
             ErrorHandler::start();
 
             $formatter = $this->getFormatter();
-            $result = $formatter->formatCurrency($value, $this->getCurrencyCode());
+            $result = $formatter->formatCurrency($value, $this->getCurrencyCodeOrDefault());
 
             ErrorHandler::stop();
-
-            var_dump($this->getCurrencyCode());
 
             return false !== $result ? $result : $value;
         }

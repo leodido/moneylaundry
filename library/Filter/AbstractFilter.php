@@ -9,6 +9,7 @@
 namespace MoneyLaundry\Filter;
 
 use Zend\I18n\Filter\AbstractLocale;
+use Zend\I18n\Exception;
 
 /**
  * Class AbstractFilter
@@ -21,11 +22,6 @@ abstract class AbstractFilter extends AbstractLocale
     protected $formatter = null;
 
     /**
-     * @var bool
-     */
-    protected $isInitialized = false;
-
-    /**
      * Retrieve (and lazy load) the number formatter
      *
      * @return \NumberFormatter
@@ -33,9 +29,13 @@ abstract class AbstractFilter extends AbstractLocale
     public function getFormatter()
     {
         if ($this->formatter === null) {
-            // FIXME: assign created formatted to a var
-            // FIXME: throw exception if !$formatter
-            $this->setFormatter(\NumberFormatter::create($this->getLocale(), \NumberFormatter::CURRENCY));
+            $formatter = \NumberFormatter::create($this->getLocale(), \NumberFormatter::CURRENCY);
+            if (!$formatter) {
+                throw new Exception\RuntimeException(
+                    'Can not create NumberFormatter instance; ' . intl_get_error_message()
+                );
+            }
+            $this->setFormatter($formatter);
         }
 
         return $this->formatter;
@@ -49,7 +49,6 @@ abstract class AbstractFilter extends AbstractLocale
      */
     public function setFormatter(\NumberFormatter $formatter)
     {
-        $this->teardown();
         $this->formatter = $formatter;
         $this->options['locale'] = $formatter->getLocale(\Locale::VALID_LOCALE);
 
@@ -57,7 +56,7 @@ abstract class AbstractFilter extends AbstractLocale
     }
 
     /**
-     * TODO: doc
+     * Set the currency code
      *
      * @param   string|null $currencyCode
      * @return  $this
@@ -69,38 +68,31 @@ abstract class AbstractFilter extends AbstractLocale
     }
 
     /**
-     * TODO: doc
+     * Retrieve the currency code
      *
-     * @return string
+     * @return string|null
      */
     public function getCurrencyCode()
     {
+        if (!isset($this->options['currency_code'])) {
+            return null;
+        }
         return $this->options['currency_code'];
     }
 
     /**
-     * Initialize settings
+     * Retrieve the currency code or its default from NumberFormatter
+     *
+     * Note that it creates a NumberFormatter instance if it is not yet instantiated.
+     *
+     * @return string
      */
-    protected function initialize()
+    protected function getCurrencyCodeOrDefault()
     {
-        if (!$this->isInitialized) {
-            // Initialize formatter
-            $this->formatter = $this->getFormatter();
-            // Retrieve current intl currency code
-            if (!$this->getCurrencyCode()) {
-                $this->setCurrencyCode($this->formatter->getTextAttribute(\NumberFormatter::CURRENCY_CODE));
-            }
-            $this->isInitialized = true;
+        $currencyCode = $this->getCurrencyCode();
+        if (!$currencyCode) {
+            $currencyCode = $this->getFormatter()->getTextAttribute(\NumberFormatter::CURRENCY_CODE);
         }
-    }
-
-    /**
-     * Teardown settings.
-     */
-    protected function teardown()
-    {
-        $this->formatter = null;
-        $this->options['currency_code'] = null;
-        $this->isInitialized = false;
+        return $currencyCode;
     }
 }

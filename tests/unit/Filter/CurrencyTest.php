@@ -39,7 +39,7 @@ class CurrencyTest extends AbstractTest
         $this->assertEquals('ru_RU', $filter->getLocale());
     }
 
-    public function testFilter()
+    public function testFilterWithDefaultCurrencyCode()
     {
         $filter = new Currency('it_IT');
 
@@ -63,5 +63,18 @@ class CurrencyTest extends AbstractTest
         // Infinity values
         $this->assertInternalType('string', $filter->filter(INF));
         $this->assertEquals('∞ €', $filter->filter(INF));
+    }
+
+    public function testFilterWithCustomCurrencyCode()
+    {
+        $filter = new Currency('it_IT');
+        $filter->setCurrencyCode('GBP');
+
+        // Filter usual numbers
+        $this->assertInternalType('string', $filter->filter(1.10));
+        $this->assertEquals('1,10 £', $filter->filter(1.10));
+        // Filter number represented in scientific notation
+        $this->assertInternalType('string', $filter->filter(1e-2));
+        $this->assertEquals('0,01 £', $filter->filter(1e-2));
     }
 }
