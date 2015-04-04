@@ -1,17 +1,16 @@
 <?php
 namespace MoneyLaundry\Validator;
 
-use Zend\I18n\Validator\Int;
-use Zend\I18n\Validator\Float;
-use Zend\Stdlib\StringUtils;
-use Zend\Stdlib\ArrayUtils;
-use Zend\Validator\AbstractValidator;
 use Zend\I18n\Exception as I18nException;
+use Zend\I18n\Validator\Float;
+use Zend\Stdlib\ArrayUtils;
+use Zend\Stdlib\StringUtils;
+use Zend\Validator\AbstractValidator;
 
 /**
  * Class ScientificNotation
  *
- * Validate the input as a valid number expressed in scientific notation for the given locale.
+ * Validates the input as a valid number expressed in scientific notation for the given locale.
  */
 class ScientificNotation extends AbstractValidator
 {

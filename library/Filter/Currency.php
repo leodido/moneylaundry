@@ -16,24 +16,62 @@ use Zend\I18n\Filter\NumberFormat;
  * Class Currency
  *
  * Given an integer and a locale it returns the corresponding well-formatted currency amount.
- * TODO: finish
+ * TODO: complete (dominio-codominio, NAN, INF, exponential notation)
  */
 class Currency extends AbstractLocale
 {
+    const DEFAULT_LOCALE = null;
+    const DEFAULT_CURRENCY_CODE = null;
+
     /**
+     * Default options
+     *
+     * Meanings:
+     * - Key 'locale' contains the locale string (e.g., <language>[_<country>][.<charset>]) you desire
+     *
      * @var array
      */
     protected $options = [
-        'locale' => 'it_IT', // FIXME: default to null, set via constructor and setter
+        'locale' => self::DEFAULT_LOCALE,
+        'currency_code' => self::DEFAULT_CURRENCY_CODE
     ];
 
     /**
-     * @var \NumberFormatter
+     * Ctor
+     *
+     * @param array|\Traversable|string|null $localeOrOptions
+     * @param string|null                    $currencyCode
      */
-    protected $formatter = null;
+    public function __construct(
+        $localeOrOptions = self::DEFAULT_LOCALE,
+        $currencyCode = self::DEFAULT_CURRENCY_CODE
+    ) {
+        parent::__construct();
+
+        if ($localeOrOptions !== null) {
+            if (static::isOptions($localeOrOptions)) {
+                $this->setOptions($localeOrOptions);
+            } else {
+                $this->setLocale($localeOrOptions);
+                $this->setCurrencyCode($currencyCode);
+            }
+        }
+    }
+
+    public function setCurrencyCode($currencyCode = null)
+    {
+        $this->options['currency_code'] = $currencyCode;
+        return $this;
+    }
+
+    public function getCurrencyCode()
+    {
+        return $this->options['currency_code'];
+    }
 
     /**
-     * TODO: docs
+     * Returns the result of filtering $value
+     *
      * @param mixed $value
      * @return mixed
      */
@@ -42,30 +80,33 @@ class Currency extends AbstractLocale
         if (!is_scalar($value) || is_bool($value)) {
             return $value;
         }
-        // TODO: exclude number expressed with scientific notation
 
         if (is_float($value) || is_int($value)) {
-            if (is_nan($value)) {
-                return $value;
-            }
-            $formatter = new NumberFormat($this->getLocale(), \NumberFormatter::CURRENCY);
+            // FIXME: internally it uses format(), not formatCurrency(), substitute it with \NumberFormatter
+            $formatter = new NumberFormat(
+                $this->getLocale(),
+                \NumberFormatter::CURRENCY,
+                \NumberFormatter::TYPE_DOUBLE
+            );
             return $formatter->filter($value);
         }
 
-        // Check it is not a numeric written in scientific notation
-        $validator = new ScientificNotation(['locale' => $this->getLocale()]);
-        if ($validator->isValid($value)) {
-            return $value;
-        }
+        return $value;
 
-        // From string to number
-        $formatter = new NumberFormat($this->getLocale(), \NumberFormatter::DECIMAL);
-        $decimal = $formatter->filter($value);
-        if ($decimal === $value) {
-            return $value;
-        }
-        // From number to locale formatted string
-        $formatter = new NumberFormat($this->getLocale(), \NumberFormatter::CURRENCY);
-        return $formatter->filter($decimal);
+//        // Check it is not a numeric written in scientific notation
+//        $validator = new ScientificNotation(['locale' => $this->getLocale()]);
+//        if ($validator->isValid($value)) {
+//            return $value;
+//        }
+//
+//        // From string to number
+//        $formatter = new NumberFormat($this->getLocale(), \NumberFormatter::DECIMAL);
+//        $decimal = $formatter->filter($value);
+//        if ($decimal === $value) {
+//            return $value;
+//        }
+//        // From number to locale formatted string
+//        $formatter = new NumberFormat($this->getLocale(), \NumberFormatter::CURRENCY);
+//        return $formatter->filter($decimal);
     }
 }

@@ -26,9 +26,10 @@ use Zend\Stdlib\StringUtils;
  */
 class Uncurrency extends AbstractLocale
 {
+    const DEFAULT_LOCALE = null; // null means the default one for the given locale
     const DEFAULT_SCALE_CORRECTNESS = true;
     const DEFAULT_CURRENCY_OBLIGATORINESS = true;
-    // const DEFAULT_CURRENCY_CODE = null;  // FIXME: feature(currencycode)
+    const DEFAULT_CURRENCY_CODE = null; // null means the default one for the given locale //FIXME feature(currencycode)
 
     const REGEX_NUMBERS = 0;
     const REGEX_FLAGS = 1;
@@ -43,12 +44,14 @@ class Uncurrency extends AbstractLocale
     const GROUP_SEPARATOR_SYMBOL = 1007;
     const INFINITY_SYMBOL = 1008;
     const NAN_SYMBOL = 1009;
+    const CURRENCY_CODE = 1010;
 
     /**
      * Default options
      *
      * Meanings:
      * - Key 'locale' contains the locale string (e.g., <language>[_<country>][.<charset>]) you desire
+     * - Key 'currency_code' contains an ISO 4217 currency code string
      * - Key 'scale_correctness' contains a boolean value indicating
      *   if the scale (i.e., the number of digits to the right of the decimal point in a number) have to match
      *   the scale specified by the pattern of the current locale
@@ -59,7 +62,7 @@ class Uncurrency extends AbstractLocale
      */
     protected $options = [
         'locale' => null,
-        // 'currency_code' => self::DEFAULT_CURRENCY_CODE, // FIXME: feature(currencycode)
+        'currency_code' => self::DEFAULT_CURRENCY_CODE, // FIXME: feature(currencycode)
         'scale_correctness' => self::DEFAULT_SCALE_CORRECTNESS,
         'currency_obligatoriness' => self::DEFAULT_CURRENCY_OBLIGATORINESS
     ];
@@ -85,15 +88,18 @@ class Uncurrency extends AbstractLocale
     protected $isInitialized = false;
 
     /**
-     * @param array|\Traversable|string|null $localeOrOptions
-     * @param bool $fractionDigitsMandatory
-     * @param bool $currencySymbolMandatory
+     * Ctor
+     *
+     * @param array|\Traversable|string|null    $localeOrOptions
+     * @param string|null                       $currencyCode
+     * @param bool                              $scaleCorrectness
+     * @param bool                              $currencyObligatoriness
      */
     public function __construct(
-        $localeOrOptions = null,
-        // $currencyCode = self::DEFAULT_CURRENCY_CODE, // FIXME: feature(currencycode)
-        $fractionDigitsMandatory = self::DEFAULT_SCALE_CORRECTNESS,
-        $currencySymbolMandatory = self::DEFAULT_CURRENCY_OBLIGATORINESS
+        $localeOrOptions = self::DEFAULT_LOCALE,
+        $currencyCode = self::DEFAULT_CURRENCY_CODE,
+        $scaleCorrectness = self::DEFAULT_SCALE_CORRECTNESS,
+        $currencyObligatoriness = self::DEFAULT_CURRENCY_OBLIGATORINESS
     ) {
         parent::__construct();
         // @codeCoverageIgnoreStart
@@ -110,9 +116,9 @@ class Uncurrency extends AbstractLocale
                 $this->setOptions($localeOrOptions);
             } else {
                 $this->setLocale($localeOrOptions);
-                // $this->setCurrencyCode($currencyCode); // FIXME: feature(currencycode)
-                $this->setScaleCorrectness($fractionDigitsMandatory);
-                $this->setCurrencyObligatoriness($currencySymbolMandatory);
+                $this->setCurrencyCode($currencyCode); // FIXME: feature(currencycode)
+                $this->setScaleCorrectness($scaleCorrectness);
+                $this->setCurrencyObligatoriness($currencyObligatoriness);
             }
         }
     }
@@ -237,6 +243,8 @@ class Uncurrency extends AbstractLocale
     public function getFormatter()
     {
         if ($this->formatter === null) {
+            // FIXME: assign created formatted to a var
+            // FIXME: throw exception if !$formatter
             $this->setFormatter(\NumberFormatter::create($this->getLocale(), \NumberFormatter::CURRENCY));
         }
 
@@ -251,16 +259,28 @@ class Uncurrency extends AbstractLocale
      */
     public function setLocale($locale = null)
     {
-        $this->teardown();
+        $this->teardown(); // TODO: teardown only if locale != from current locale (improvement)
         return parent::setLocale($locale);
     }
 
-    // FIXME: feature(currencycode)
-    // public function setCurrencyCode($currencyCode)
-    // {
-    //     $this->options['currency_code'] = $currencyCode;
-    //     return $this;
-    // }
+    /**
+     * FIXME: feature(currencycode)
+     * @param   string|null $currencyCode
+     * @return  $this
+     */
+    public function setCurrencyCode($currencyCode = null)
+    {
+        $this->options['currency_code'] = $currencyCode;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCurrencyCode()
+    {
+        return $this->options['currency_code'];
+    }
 
     /**
      * Set whether to check or not that the number of decimal places is as requested by current locale pattern
@@ -310,7 +330,7 @@ class Uncurrency extends AbstractLocale
      * Returns the result of filtering $value
      *
      * @param  mixed $value
-     * @return string
+     * @return mixed
      */
     public function filter($value)
     {
@@ -330,16 +350,16 @@ class Uncurrency extends AbstractLocale
             ErrorHandler::start();
             $currency = $this->getFormatter();
             $position = 0;
-            $result = $currency->parseCurrency($value, $isoCurrencySym, $position);
+            $result = $currency->parseCurrency($value, $resultCurrencyCode, $position);
 
             // Input is a valid currency?
             if ($result !== false) {
                 ErrorHandler::stop();
                 // FIXME: feature(currencycode)
                 // Check that detect currency matches with specified currency
-                // if ($this->isCurrencySymbolMandatory() && $isoCyrrencySym !== $this->getCurrencyCode()) {
-                //    return $unfilteredValue;
-                // }
+                if ($resultCurrencyCode !== $this->getCurrencyCode()) { // FIXME? && $this->getCurrencyObligatoriness()
+                    return $unfilteredValue;
+                }
 
                 // Check if the parsing finished before the end of the input
                 if ($position !== mb_strlen($value, 'UTF-8')) {
@@ -354,7 +374,7 @@ class Uncurrency extends AbstractLocale
             }
 
             // NAN handling
-            if ($this->getSymbol(self::NAN_SYMBOL) === $value) { // FIXME: && !$this->getCurrencyObligatoriness()
+            if ($this->getSymbol(self::NAN_SYMBOL) === $value) { // FIXME? && !$this->getCurrencyObligatoriness()
                 return NAN; // Return the double NAN
             }
 
@@ -410,7 +430,7 @@ class Uncurrency extends AbstractLocale
             }
 
             ErrorHandler::stop();
-            return $result !== false ? $result : $unfilteredValue;
+            return $result !== false ? $result : $unfilteredValue; // FIXME? strict check that it is a double
         }
         // At this stage input is not a string
 

@@ -17,10 +17,23 @@ use Zend\Stdlib\StringUtils;
  */
 class UncurrencyTest extends AbstractTest
 {
+    public function setUp()
+    {
+        if (!extension_loaded('mbstring')) {
+            $this->markTestSkipped('The mbstring extension is not installed/enabled');
+        }
+
+        parent::setUp();
+    }
 
     public function testCtor()
     {
         $filter = new Uncurrency();
+        $this->assertEquals('en_US', $filter->getLocale());
+        $this->assertEquals(Uncurrency::DEFAULT_SCALE_CORRECTNESS, $filter->getScaleCorrectness());
+        $this->assertEquals(Uncurrency::DEFAULT_CURRENCY_OBLIGATORINESS, $filter->getCurrencyObligatoriness());
+
+        $filter = new Uncurrency(null);
         $this->assertEquals('en_US', $filter->getLocale());
         $this->assertEquals(Uncurrency::DEFAULT_SCALE_CORRECTNESS, $filter->getScaleCorrectness());
         $this->assertEquals(Uncurrency::DEFAULT_CURRENCY_OBLIGATORINESS, $filter->getCurrencyObligatoriness());
@@ -30,22 +43,22 @@ class UncurrencyTest extends AbstractTest
         $this->assertEquals(Uncurrency::DEFAULT_SCALE_CORRECTNESS, $filter->getScaleCorrectness());
         $this->assertEquals(Uncurrency::DEFAULT_CURRENCY_OBLIGATORINESS, $filter->getCurrencyObligatoriness());
 
-        $filter = new Uncurrency('it_IT', false, false);
+        $filter = new Uncurrency('it_IT', null, false, false);
         $this->assertEquals('it_IT', $filter->getLocale());
         $this->assertFalse($filter->getScaleCorrectness());
         $this->assertFalse($filter->getCurrencyObligatoriness());
 
-        $filter = new Uncurrency('it_IT', true, false);
+        $filter = new Uncurrency('it_IT', null, true, false);
         $this->assertEquals('it_IT', $filter->getLocale());
         $this->assertTrue($filter->getScaleCorrectness());
         $this->assertFalse($filter->getCurrencyObligatoriness());
 
-        $filter = new Uncurrency('it_IT', false, true);
+        $filter = new Uncurrency('it_IT', null, false, true);
         $this->assertEquals('it_IT', $filter->getLocale());
         $this->assertFalse($filter->getScaleCorrectness());
         $this->assertTrue($filter->getCurrencyObligatoriness());
 
-        $filter = new Uncurrency('it_IT', true, true);
+        $filter = new Uncurrency('it_IT', null, true, true);
         $this->assertEquals('it_IT', $filter->getLocale());
         $this->assertTrue($filter->getScaleCorrectness());
         $this->assertTrue($filter->getCurrencyObligatoriness());
