@@ -95,4 +95,18 @@ abstract class AbstractFilter extends AbstractLocale
         }
         return $currencyCode;
     }
+
+    /**
+     * Set the locale
+     *
+     * @param  string|null $locale
+     * @return $this
+     */
+    public function setLocale($locale = null)
+    {
+        $this->formatter = null;
+
+        return parent::setLocale($locale);
+    }
+
 }

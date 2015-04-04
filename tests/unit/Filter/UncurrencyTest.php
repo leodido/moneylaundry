@@ -28,6 +28,7 @@ class UncurrencyTest extends AbstractTest
 
     public function testCtor()
     {
+        // FIXME: assertions related to currency code
         $filter = new Uncurrency();
         $this->assertEquals('en_US', $filter->getLocale());
         $this->assertEquals(Uncurrency::DEFAULT_SCALE_CORRECTNESS, $filter->getScaleCorrectness());
@@ -94,14 +95,19 @@ class UncurrencyTest extends AbstractTest
         $this->assertEquals($filter->getLocale(), 'it_IT');
     }
 
-    public function testCurrencyMandatoryOption()
+    public function testCurrencyCodeOption()
+    {
+        // FIXME: to be done
+    }
+
+    public function testCurrencyObligatorinessOption()
     {
         $filter = new Uncurrency;
         $this->assertInstanceOf('MoneyLaundry\Filter\Uncurrency', $filter->setCurrencyObligatoriness(false));
         $this->assertFalse($filter->getCurrencyObligatoriness());
     }
 
-    public function testFractionDigitsMandatoryOption()
+    public function testScaleCorrectnessOption()
     {
         $filter = new Uncurrency;
         $this->assertInstanceOf('MoneyLaundry\Filter\Uncurrency', $filter->setScaleCorrectness(false));
@@ -115,15 +121,6 @@ class UncurrencyTest extends AbstractTest
     {
         $filter = new Uncurrency;
         $filter->getSymbols();
-    }
-
-    /**
-     * @expectedException \Zend\I18n\Exception\RuntimeException
-     */
-    public function testGetRegexComponentsShouldThrowRuntimeExceptionWhenFilterHasNotBeenInitialized()
-    {
-        $filter = new Uncurrency;
-        $filter->getRegexComponents();
     }
 
     public function testGetSymbolsAndRegexComponents()
@@ -200,73 +197,64 @@ class UncurrencyTest extends AbstractTest
         $filter->getRegexComponent(-1);
     }
 
-//    public function testSetFormatterShouldTeardownSettings()
+    // FIXME: move this in the AbstractFilterTest
+//    public function testSetLocaleShouldVoidFormatter()
 //    {
-//        $mock = $this->getMock('MoneyLaundry\Filter\Uncurrency', ['teardown']);
-//        $mock->expects($this->once())
-//             ->method('teardown');
-//        /** @var $mock \MoneyLaundry\Filter\Uncurrency */
-//        $mock->setFormatter(\NumberFormatter::create('it_IT', \NumberFormatter::CURRENCY));
+//        $filter = new Uncurrency('it_IT');
+//        $reflector = new \ReflectionClass($filter);
+//        $property = $reflector->getProperty('formatter');
+//        $property->setAccessible(true);
+//
+//        $filter->getFormatter();
+//
+//        $this->assertNotNull($property->getValue($filter));
+//
+//        $filter->setLocale('en_US');
+//
+//        $this->assertNull($property->getValue($filter));
+//
+//        $property->setAccessible(false);
 //    }
 
-    public function testSetLocaleShouldTeardownSettings()
-    {
-        $mock = $this->getMock('MoneyLaundry\Filter\Uncurrency', ['teardown']);
-        $mock->expects($this->once())
-            ->method('teardown');
-        /** @var $mock \MoneyLaundry\Filter\Uncurrency */
-        $mock->setLocale('en_US');
-    }
-
-    public function testChangeFormatter()
+    public function testChangeFormatterOnFly()
     {
         $filter = new Uncurrency('it_IT');
         $custom = \NumberFormatter::create('en_US', \NumberFormatter::CURRENCY);
         $filter->setFormatter($custom);
         $this->assertEquals('en_US', $filter->getLocale());
-        $this->assertEquals($custom->getTextAttribute(\NumberFormatter::CURRENCY_CODE), $filter->getCurrencyCode());
     }
 
     public function testChangeLocaleOnFly()
     {
-        // Change initialize() protected method accessibility
-        $class = new \ReflectionClass('MoneyLaundry\Filter\Uncurrency');
-        $initializeMethod = $class->getMethod('initialize');
-        $initializeMethod->setAccessible(true);
-
         // Store symbols and regex components from it_IT
         $itLocale = 'it_IT';
         $itFilter = new Uncurrency($itLocale);
-        $initializeMethod->invoke($itFilter); // enforce init
+        $itFormatter = $itFilter->getFormatter();
         $itOpts = $itFilter->getOptions();
         $itSymbols = $itFilter->getSymbols();
         $itRegexComponents = $itFilter->getRegexComponents();
-        $itFormatter = $itFilter->getFormatter();
         // Store symbols and regex components from ar_AE
         $aeLocale = 'ar_AE';
         $aeFilter = new Uncurrency($aeLocale);
-        $initializeMethod->invoke($aeFilter); // enforce init
+        $aeFormatter = $aeFilter->getFormatter();
         $aeOpts = $aeFilter->getOptions();
         $aeSymbols = $aeFilter->getSymbols();
         $aeRegexComponents = $aeFilter->getRegexComponents();
-        $aeFormatter = $aeFilter->getFormatter();
 
         // We instantiate a single filter
         $filter = new Uncurrency();
         $filter->setLocale('it_IT');
-        $initializeMethod->invoke($filter); // enforce init
         $this->assertEquals($itLocale, $filter->getLocale());
+        $this->assertEquals($itFormatter, $filter->getFormatter());
         $this->assertEquals($itSymbols, $filter->getSymbols());
         $this->assertEquals($itRegexComponents, $filter->getRegexComponents());
-        $this->assertEquals($itFormatter, $filter->getFormatter());
         $this->assertEquals($itOpts, $filter->getOptions());
         // Now we change its locale on fly
         $filter->setLocale('ar_AE');
-        $initializeMethod->invoke($filter); // enforce init
         $this->assertEquals($aeLocale, $filter->getLocale());
+        $this->assertEquals($aeFormatter, $filter->getFormatter());
         $this->assertEquals($aeSymbols, $filter->getSymbols());
         $this->assertEquals($aeRegexComponents, $filter->getRegexComponents());
-        $this->assertEquals($aeFormatter, $filter->getFormatter());
         $this->assertEquals($aeOpts, $filter->getOptions());
     }
 
@@ -281,13 +269,8 @@ class UncurrencyTest extends AbstractTest
 
     public function testFiltersInfinityValues()
     {
-        $class = new \ReflectionClass('MoneyLaundry\Filter\Uncurrency');
-        $initializeMethod = $class->getMethod('initialize');
-        $initializeMethod->setAccessible(true);
-
         $filter = new Uncurrency('ar_AE', false, true);
         $formatter = $filter->getFormatter();
-        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
 
         $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
         $this->assertEquals('∞', $filter->filter('∞'));
@@ -299,7 +282,6 @@ class UncurrencyTest extends AbstractTest
 
         $filter = new Uncurrency('ru_RU', false, true);
         $formatter = $filter->getFormatter();
-        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
 
         $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
         $this->assertEquals('∞', $filter->filter('∞'));
@@ -311,7 +293,6 @@ class UncurrencyTest extends AbstractTest
 
         $filter = new Uncurrency('bn_IN', false, true);
         $formatter = $filter->getFormatter();
-        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
 
         $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
         $this->assertEquals('∞', $filter->filter('∞'));
@@ -324,36 +305,27 @@ class UncurrencyTest extends AbstractTest
 
     public function testFiltersNaNValues()
     {
-        $class = new \ReflectionClass('MoneyLaundry\Filter\Uncurrency');
-        $initializeMethod = $class->getMethod('initialize');
-        $initializeMethod->setAccessible(true);
 
         $filter = new Uncurrency('ar_AE');
         $formatter = $filter->getFormatter();
-        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
         $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "ليس رقم"
         $this->assertTrue(is_nan($filter->filter($formatter->format(acos(1.01))))); // "ليس رقم"
 
         $filter->setLocale('bn_IN');
         $formatter = $filter->getFormatter();
-        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
         $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "সংখ্যা না"
         $this->assertTrue(is_nan($filter->filter($formatter->format(acos(1.01))))); // "সংখ্যা না"
 
         $filter->setLocale('it_IT');
         $formatter = $filter->getFormatter();
-        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
         $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "NaN"
         $this->assertTrue(is_nan($filter->filter($formatter->format(acos(1.01))))); // "NaN
         $this->assertEquals("NaN\xC2\xA0\xE2\x82\xAC", $filter->filter("NaN\xC2\xA0\xE2\x82\xAC"));
 
         $filter->setLocale('ru_RU');
         $formatter = $filter->getFormatter();
-        $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
         $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "не число"
         $this->assertTrue(is_nan($filter->filter($formatter->format(acos(1.01))))); // "не число"
-
-        $initializeMethod->setAccessible(false);
     }
 
     public function testFilter()

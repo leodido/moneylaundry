@@ -9,7 +9,6 @@
 namespace MoneyLaundry\Filter;
 
 use Zend\I18n\Exception as I18nException;
-use Zend\I18n\Filter\AbstractLocale;
 use Zend\Stdlib\ErrorHandler;
 use Zend\Stdlib\StringUtils;
 
@@ -42,7 +41,6 @@ class Uncurrency extends AbstractFilter
     const GROUP_SEPARATOR_SYMBOL = 1007;
     const INFINITY_SYMBOL = 1008;
     const NAN_SYMBOL = 1009;
-    const CURRENCY_CODE = 1010;
 
     /**
      * Default options
@@ -112,130 +110,6 @@ class Uncurrency extends AbstractFilter
     }
 
     /**
-     * Initialize settings.
-     */
-    protected function initialize()
-    {
-        if (!$this->isInitialized) {
-            parent::initialize();
-            // Disable scientific notation
-            $this->getFormatter()->setSymbol(\NumberFormatter::EXPONENTIAL_SYMBOL, null);
-            // Setup symbols
-            $this->initSymbols();
-            // Setup regex components
-            $this->initRegexComponents();
-            $this->isInitialized = true;
-        }
-    }
-
-    /**
-     * Teardown settings.
-     */
-    protected function teardown()
-    {
-        parent::teardown();
-
-        $this->symbols = [];
-        $this->regexComponents = [];
-    }
-
-    /**
-     * Init formatter symbols
-     *
-     * @return array
-     */
-    protected function initSymbols()
-    {
-        if ($this->symbols == null) {
-            $formatter = $this->getFormatter();
-            // Retrieve and process symbols
-            $this->symbols[self::CURRENCY_SYMBOL] = $formatter->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
-            $this->symbols[self::GROUP_SEPARATOR_SYMBOL] = $formatter->getSymbol(
-                \NumberFormatter::MONETARY_GROUPING_SEPARATOR_SYMBOL
-            );
-            $this->symbols[self::SEPARATOR_SYMBOL] = $formatter->getSymbol(
-                \NumberFormatter::MONETARY_SEPARATOR_SYMBOL
-            );
-            $this->symbols[self::INFINITY_SYMBOL] = $formatter->getSymbol(\NumberFormatter::INFINITY_SYMBOL);
-            $this->symbols[self::NAN_SYMBOL] = $formatter->getSymbol(\NumberFormatter::NAN_SYMBOL);
-            // FIXME? remove currency symbol from pattern is needed
-            $this->symbols[self::POSITIVE_PREFIX] = str_replace(
-                $this->symbols[self::CURRENCY_SYMBOL],
-                '',
-                $formatter->getTextAttribute(\NumberFormatter::POSITIVE_PREFIX)
-            );
-            // FIXME? remove currency symbol from pattern is needed
-            $this->symbols[self::POSITIVE_SUFFIX] = str_replace(
-                $this->symbols[self::CURRENCY_SYMBOL],
-                '',
-                $formatter->getTextAttribute(\NumberFormatter::POSITIVE_SUFFIX)
-            );
-            // FIXME? remove currency symbol from pattern is needed
-            $this->symbols[self::NEGATIVE_PREFIX] = str_replace(
-                $this->symbols[self::CURRENCY_SYMBOL],
-                '',
-                $formatter->getTextAttribute(\NumberFormatter::NEGATIVE_PREFIX)
-            );
-            // FIXME? remove currency symbol from pattern is needed
-            $this->symbols[self::NEGATIVE_SUFFIX] = str_replace(
-                $this->symbols[self::CURRENCY_SYMBOL],
-                '',
-                $formatter->getTextAttribute(\NumberFormatter::NEGATIVE_SUFFIX)
-            );
-            $this->symbols[self::FRACTION_DIGITS] = $this->formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS);
-        }
-
-        return $this->symbols;
-    }
-
-    /**
-     * Init regex components
-     *
-     * @return array
-     */
-    protected function initRegexComponents()
-    {
-        if ($this->regexComponents == null) {
-            $this->regexComponents[self::REGEX_NUMBERS] = '0-9';
-            $this->regexComponents[self::REGEX_FLAGS] = '';
-            if (StringUtils::hasPcreUnicodeSupport()) {
-                $this->regexComponents[self::REGEX_NUMBERS] = '\p{N}';
-                $this->regexComponents[self::REGEX_FLAGS] .= 'u';
-            }
-        }
-
-        return $this->regexComponents;
-    }
-
-//    /**
-//     * Set a number formatter
-//     *
-//     * Note that using a custom formatter will probably void the class functionalities.
-//     *
-//     * @param  \NumberFormatter $formatter
-//     * @return $this
-//     */
-//    public function setFormatter(\NumberFormatter $formatter)
-//    {
-//        $this->teardown();
-//
-//        return parent::setFormatter($formatter);
-//    }
-
-    /**
-     * Set the locale
-     *
-     * @param  string|null $locale
-     * @return $this
-     */
-    public function setLocale($locale = null)
-    {
-        $this->teardown();
-
-        return parent::setLocale($locale);
-    }
-
-    /**
      * Set whether to check or not that the number of decimal places is as requested by current locale pattern
      *
      * @param  bool $exactFractionDigits
@@ -245,6 +119,16 @@ class Uncurrency extends AbstractFilter
     {
         $this->options['scale_correctness'] = (bool) $exactFractionDigits;
         return $this;
+    }
+
+    /**
+     * The fraction digits have to be spiecified and exact?
+     *
+     * @return bool
+     */
+    public function getScaleCorrectness()
+    {
+        return $this->options['scale_correctness'];
     }
 
     /**
@@ -260,18 +144,8 @@ class Uncurrency extends AbstractFilter
     }
 
     /**
-     * The fraction digits have to be spiecified and exact?
-     *
-     * @return bool
-     */
-    public function getScaleCorrectness()
-    {
-        return $this->options['scale_correctness'];
-    }
-
-    /**
      * Is the currency symbol mandatory?
-     * 
+     *
      * @return bool
      */
     public function getCurrencyObligatoriness()
@@ -288,20 +162,25 @@ class Uncurrency extends AbstractFilter
     public function filter($value)
     {
         if (is_string($value)) {
-            // Init
-            $this->initialize();
+            // Initialization
+            $currency = $this->getFormatter();
+            // Disable scientific notation
+            $currency->setSymbol(\NumberFormatter::EXPONENTIAL_SYMBOL, null);
+            // Retrieve symbols
+            $symbols = $this->getSymbols();
+
+            // Store original value
             $unfilteredValue = $value;
 
             // Replace spaces with NBSP (non breaking spaces)
             $value = str_replace("\x20", "\xC2\xA0", $value);
 
             // Get decimal place info
-            $numFractionDigits = $this->getSymbol(self::FRACTION_DIGITS);
-            $numDecimals = $this->countDecimalDigits($value);
+            $numFractionDigits = $symbols[self::FRACTION_DIGITS];
+            $numDecimals = $this->countDecimalDigits($value, $symbols[self::SEPARATOR_SYMBOL]);
 
             // Parse as currency
             ErrorHandler::start();
-            $currency = $this->getFormatter();
             $position = 0;
             $result = $currency->parseCurrency($value, $resultCurrencyCode, $position);
 
@@ -310,7 +189,7 @@ class Uncurrency extends AbstractFilter
                 ErrorHandler::stop();
                 // FIXME: feature(currencycode)
                 // Check that detect currency matches with specified currency
-                if ($resultCurrencyCode !== $this->getCurrencyCode()) { // FIXME? && $this->getCurrencyObligatoriness()
+                if ($resultCurrencyCode !== $this->getCurrencyCodeOrDefault()) { // FIXME? && $this->getCurrencyObligatoriness()
                     return $unfilteredValue;
                 }
 
@@ -327,7 +206,7 @@ class Uncurrency extends AbstractFilter
             }
 
             // NAN handling
-            if ($this->getSymbol(self::NAN_SYMBOL) === $value) { // FIXME? && !$this->getCurrencyObligatoriness()
+            if ($symbols[self::NAN_SYMBOL] === $value) { // FIXME? && !$this->getCurrencyObligatoriness()
                 return NAN; // Return the double NAN
             }
 
@@ -340,7 +219,7 @@ class Uncurrency extends AbstractFilter
             }
 
             // Regex components
-            $symbols = array_filter(array_unique(array_values($this->getSymbols())));
+            $symbols = array_filter(array_unique(array_values($symbols)));
             $numbers = $this->getRegexComponent(self::REGEX_NUMBERS);
             $flags = $this->getRegexComponent(self::REGEX_FLAGS);
 
@@ -363,15 +242,15 @@ class Uncurrency extends AbstractFilter
                 // Substitute negative currency representation with negative number representation
                 $decimalNegPrefix = $decimal->getTextAttribute(\NumberFormatter::NEGATIVE_PREFIX);
                 $decimalNegSuffix = $decimal->getTextAttribute(\NumberFormatter::NEGATIVE_SUFFIX);
-                $currencyNegPrefix = $this->getSymbol(self::NEGATIVE_PREFIX);
-                $currencyNegSuffix = $this->getSymbol(self::NEGATIVE_SUFFIX);
+                $currencyNegPrefix = $symbols[self::NEGATIVE_PREFIX];
+                $currencyNegSuffix = $symbols[self::NEGATIVE_SUFFIX];
                 if ($decimalNegPrefix !== $currencyNegPrefix && $decimalNegSuffix !== $currencyNegSuffix) {
                     $regex = sprintf(
                         '#^%s([%s%s%s]+)%s$#%s',
                         preg_quote($currencyNegPrefix),
                         $numbers,
-                        preg_quote($this->getSymbol(self::SEPARATOR_SYMBOL)),
-                        preg_quote($this->getSymbol(self::GROUP_SEPARATOR_SYMBOL)),
+                        preg_quote($symbols[self::SEPARATOR_SYMBOL]),
+                        preg_quote($symbols[self::GROUP_SEPARATOR_SYMBOL]),
                         preg_quote($currencyNegSuffix),
                         $flags
                     );
@@ -397,29 +276,29 @@ class Uncurrency extends AbstractFilter
      */
     public function getSymbols()
     {
-        if (count($this->symbols) == 0) {
-            throw new I18nException\RuntimeException(
-                'Symbols are not present because the filter has not been initialized'
-            );
+        if (!$this->formatter) {
+            throw new I18nException\RuntimeException('An instance of NumberFormatted is required.');
         }
 
-        return $this->symbols;
-    }
+        $symbolKeys = [
+            self::CURRENCY_SYMBOL,
+            self::GROUP_SEPARATOR_SYMBOL,
+            self::SEPARATOR_SYMBOL,
+            self::INFINITY_SYMBOL,
+            self::NAN_SYMBOL,
+            self::POSITIVE_PREFIX,
+            self::POSITIVE_SUFFIX,
+            self::NEGATIVE_PREFIX,
+            self::NEGATIVE_SUFFIX,
+            self::FRACTION_DIGITS,
+        ];
 
-    /**
-     * Get all the regex components
-     *
-     * @return array
-     */
-    public function getRegexComponents()
-    {
-        if (count($this->regexComponents) == 0) {
-            throw new I18nException\RuntimeException(
-                'Regex components are not present because the filter has not been initialized'
-            );
+        $symbols = [];
+        foreach ($symbolKeys as $symbol) {
+            $symbols[$symbol] = $this->getSymbol($symbol);
         }
 
-        return $this->regexComponents;
+        return $symbols;
     }
 
     /**
@@ -430,17 +309,80 @@ class Uncurrency extends AbstractFilter
      */
     public function getSymbol($symbol)
     {
-        $symbols = $this->getSymbols();
-
-        if (!isset($symbols[$symbol])) {
-            throw new I18nException\InvalidArgumentException(sprintf(
-                'Symbol not found; received "%s"',
-                $symbol
-            ));
+        if (!$this->formatter) {
+            throw new I18nException\RuntimeException('An instance of NumberFormatted is required.');
         }
 
-        return $symbols[$symbol];
+        $formatter = $this->formatter;
+        switch ($symbol) {
+            case self::CURRENCY_SYMBOL:
+                return $formatter->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
+            case self::GROUP_SEPARATOR_SYMBOL:
+                return $formatter->getSymbol(
+                    \NumberFormatter::MONETARY_GROUPING_SEPARATOR_SYMBOL
+                );
+            case self::SEPARATOR_SYMBOL:
+                return $formatter->getSymbol(
+                    \NumberFormatter::MONETARY_SEPARATOR_SYMBOL
+                );
+            case self::INFINITY_SYMBOL:
+                return $formatter->getSymbol(\NumberFormatter::INFINITY_SYMBOL);
+            case self::NAN_SYMBOL:
+                return $formatter->getSymbol(\NumberFormatter::NAN_SYMBOL);
+            case self::POSITIVE_PREFIX:
+                // FIXME? remove currency symbol from pattern is needed
+                return str_replace(
+                    $formatter->getSymbol(\NumberFormatter::CURRENCY_SYMBOL),
+                    '',
+                    $formatter->getTextAttribute(\NumberFormatter::POSITIVE_PREFIX)
+                );
+            case self::POSITIVE_SUFFIX:
+                // FIXME? remove currency symbol from pattern is needed
+                return str_replace(
+                    $formatter->getSymbol(\NumberFormatter::CURRENCY_SYMBOL),
+                    '',
+                    $formatter->getTextAttribute(\NumberFormatter::POSITIVE_SUFFIX)
+                );
+            case self::NEGATIVE_PREFIX:
+                // FIXME? remove currency symbol from pattern is needed
+                return str_replace(
+                    $formatter->getSymbol(\NumberFormatter::CURRENCY_SYMBOL),
+                    '',
+                    $formatter->getTextAttribute(\NumberFormatter::NEGATIVE_PREFIX)
+                );
+            case self::NEGATIVE_SUFFIX:
+                // FIXME? remove currency symbol from pattern is needed
+                return str_replace(
+                    $formatter->getSymbol(\NumberFormatter::CURRENCY_SYMBOL),
+                    '',
+                    $formatter->getTextAttribute(\NumberFormatter::NEGATIVE_SUFFIX)
+                );
+            case self::FRACTION_DIGITS:
+                return $this->formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS);
+        }
+
+        throw new I18nException\InvalidArgumentException('Invalid symbol');
     }
+
+    /**
+     * Get all the regex components
+     *
+     * @return array
+     */
+    public function getRegexComponents()
+    {
+        if ($this->regexComponents == null) {
+            $this->regexComponents[self::REGEX_NUMBERS] = '0-9';
+            $this->regexComponents[self::REGEX_FLAGS] = '';
+            if (StringUtils::hasPcreUnicodeSupport()) {
+                $this->regexComponents[self::REGEX_NUMBERS] = '\p{N}';
+                $this->regexComponents[self::REGEX_FLAGS] .= 'u';
+            }
+        }
+
+        return $this->regexComponents;
+    }
+
 
     /**
      * Retrieve single regex component by its constant identifier
@@ -466,11 +408,12 @@ class Uncurrency extends AbstractFilter
      * Count the number of decimals that $number contains
      *
      * @param string $number
+     * @param string $separatorSymbol
      * @return int
      */
-    protected function countDecimalDigits($number)
+    protected function countDecimalDigits($number, $separatorSymbol)
     {
-        $decimals = mb_substr(mb_strrchr($number, $this->getSymbol(self::SEPARATOR_SYMBOL), false), 1);
+        $decimals = mb_substr(mb_strrchr($number, $separatorSymbol, false), 1);
         return preg_match_all(
             sprintf(
                 '#%s#%s',
