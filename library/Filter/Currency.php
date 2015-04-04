@@ -20,20 +20,18 @@ use Zend\I18n\Filter\NumberFormat;
  */
 class Currency extends AbstractLocale
 {
-    const DEFAULT_LOCALE = null;
-    const DEFAULT_CURRENCY_CODE = null;
-
     /**
      * Default options
      *
      * Meanings:
      * - Key 'locale' contains the locale string (e.g., <language>[_<country>][.<charset>]) you desire
+     * - Key 'currency_code' ... // TODO: doc
      *
      * @var array
      */
     protected $options = [
-        'locale' => self::DEFAULT_LOCALE,
-        'currency_code' => self::DEFAULT_CURRENCY_CODE
+        'locale' => null,
+        'currency_code' => null
     ];
 
     /**
@@ -43,8 +41,8 @@ class Currency extends AbstractLocale
      * @param string|null                    $currencyCode
      */
     public function __construct(
-        $localeOrOptions = self::DEFAULT_LOCALE,
-        $currencyCode = self::DEFAULT_CURRENCY_CODE
+        $localeOrOptions = null,
+        $currencyCode = null
     ) {
         parent::__construct();
 

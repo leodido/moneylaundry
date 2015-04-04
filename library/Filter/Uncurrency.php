@@ -26,10 +26,8 @@ use Zend\Stdlib\StringUtils;
  */
 class Uncurrency extends AbstractLocale
 {
-    const DEFAULT_LOCALE = null; // null means the default one for the given locale
     const DEFAULT_SCALE_CORRECTNESS = true;
     const DEFAULT_CURRENCY_OBLIGATORINESS = true;
-    const DEFAULT_CURRENCY_CODE = null; // null means the default one for the given locale //FIXME feature(currencycode)
 
     const REGEX_NUMBERS = 0;
     const REGEX_FLAGS = 1;
@@ -62,7 +60,7 @@ class Uncurrency extends AbstractLocale
      */
     protected $options = [
         'locale' => null,
-        'currency_code' => self::DEFAULT_CURRENCY_CODE, // FIXME: feature(currencycode)
+        'currency_code' => null,
         'scale_correctness' => self::DEFAULT_SCALE_CORRECTNESS,
         'currency_obligatoriness' => self::DEFAULT_CURRENCY_OBLIGATORINESS
     ];
@@ -96,8 +94,8 @@ class Uncurrency extends AbstractLocale
      * @param bool                              $currencyObligatoriness
      */
     public function __construct(
-        $localeOrOptions = self::DEFAULT_LOCALE,
-        $currencyCode = self::DEFAULT_CURRENCY_CODE,
+        $localeOrOptions = null,
+        $currencyCode = null,
         $scaleCorrectness = self::DEFAULT_SCALE_CORRECTNESS,
         $currencyObligatoriness = self::DEFAULT_CURRENCY_OBLIGATORINESS
     ) {

@@ -8,7 +8,6 @@
  */
 namespace MoneyLaundryUnitTest\Filter;
 
-use MoneyLaundry\Filter\Currency as CurrencyFilter;
 use MoneyLaundry\Filter\Currency;
 use MoneyLaundryUnitTest\AbstractTest;
 
@@ -38,12 +37,11 @@ class CurrencyTest extends AbstractTest
         $filter = new Currency();
         $filter->setLocale('ru_RU');
         $this->assertEquals('ru_RU', $filter->getLocale());
-
     }
 
     public function testFilter()
     {
-        $filter = new CurrencyFilter('it_IT');
+        $filter = new Currency('it_IT');
 
         // Filter number represented in scientific notation
         $this->assertInternalType('string', $filter->filter(1e-2));
