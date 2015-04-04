@@ -322,7 +322,8 @@ class UncurrencyTest extends AbstractTest
         $formatter = $filter->getFormatter();
         $initializeMethod->invoke($filter); // Force initialization calling the protected initialize() method
         $this->assertTrue(is_nan($filter->filter($formatter->format(NAN)))); // "NaN"
-        $this->assertTrue(is_nan($filter->filter($formatter->format(acos(1.01))))); // "NaN"
+        $this->assertTrue(is_nan($filter->filter($formatter->format(acos(1.01))))); // "NaN
+        $this->assertEquals("NaN\xC2\xA0\xE2\x82\xAC", $filter->filter("NaN\xC2\xA0\xE2\x82\xAC"));
 
         $filter->setLocale('ru_RU');
         $formatter = $filter->getFormatter();

@@ -354,7 +354,7 @@ class Uncurrency extends AbstractLocale
             }
 
             // NAN handling
-            if ($this->getSymbol(self::NAN_SYMBOL) === $value) {
+            if ($this->getSymbol(self::NAN_SYMBOL) === $value) { // FIXME: && !$this->getCurrencyObligatoriness()
                 return NAN; // Return the double NAN
             }
 
