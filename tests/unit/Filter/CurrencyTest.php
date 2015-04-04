@@ -77,4 +77,18 @@ class CurrencyTest extends AbstractTest
         $this->assertInternalType('string', $filter->filter(1e-2));
         $this->assertEquals('0,01 £', $filter->filter(1e-2));
     }
+
+    public function testFilterInfinityValues()
+    {
+        $filter = new Currency('it_IT', 'USD');
+
+        var_dump($filter->filter(INF));
+    }
+
+    public function testFilterNaNValues()
+    {
+        $filter = new Currency('ar_QA', 'EUR');
+
+        var_dump($filter->filter(NAN));
+    }
 }

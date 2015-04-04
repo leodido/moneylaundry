@@ -196,10 +196,17 @@ class Uncurrency extends AbstractFilter
                 if ($position !== mb_strlen($value, 'UTF-8')) {
                     return $unfilteredValue;
                 }
-                // Check if the number of decimal digits match the requirement
-                if ($this->getScaleCorrectness() && $numDecimals !== $numFractionDigits) {
+
+                var_dump($result);
+                var_dump($numDecimals);
+                var_dump($numFractionDigits);
+
+                // Check if the number of decimal digits match the requirement (unless the result is not finite)
+                if ($this->getScaleCorrectness() && ($numDecimals !== $numFractionDigits && is_finite($result))) {
                     return $unfilteredValue;
                 }
+
+
 
                 return $result;
             }
