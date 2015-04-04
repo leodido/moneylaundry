@@ -8,9 +8,7 @@
  */
 namespace MoneyLaundry\Filter;
 
-use MoneyLaundry\Validator\ScientificNotation;
-use Zend\I18n\Filter\AbstractLocale;
-use Zend\I18n\Filter\NumberFormat;
+use Zend\Stdlib\ErrorHandler;
 
 /**
  * Class Currency
@@ -56,17 +54,6 @@ class Currency extends AbstractFilter
         }
     }
 
-    public function setCurrencyCode($currencyCode = null)
-    {
-        $this->options['currency_code'] = $currencyCode;
-        return $this;
-    }
-
-    public function getCurrencyCode()
-    {
-        return $this->options['currency_code'];
-    }
-
     /**
      * Returns the result of filtering $value
      *
@@ -80,13 +67,16 @@ class Currency extends AbstractFilter
         }
 
         if (is_float($value) || is_int($value)) {
-            // FIXME: internally it uses format(), not formatCurrency(), substitute it with \NumberFormatter
-            $formatter = new NumberFormat(
-                $this->getLocale(),
-                \NumberFormatter::CURRENCY,
-                \NumberFormatter::TYPE_DOUBLE
-            );
-            return $formatter->filter($value);
+            ErrorHandler::start();
+
+            $formatter = $this->getFormatter();
+            $result = $formatter->formatCurrency($value, $this->getCurrencyCode());
+
+            ErrorHandler::stop();
+
+            var_dump($this->getCurrencyCode());
+
+            return false !== $result ? $result : $value;
         }
 
         return $value;

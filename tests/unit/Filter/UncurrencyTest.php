@@ -200,14 +200,14 @@ class UncurrencyTest extends AbstractTest
         $filter->getRegexComponent(-1);
     }
 
-    public function testSetFormatterShouldTeardownSettings()
-    {
-        $mock = $this->getMock('MoneyLaundry\Filter\Uncurrency', ['teardown']);
-        $mock->expects($this->once())
-             ->method('teardown');
-        /** @var $mock \MoneyLaundry\Filter\Uncurrency */
-        $mock->setFormatter(\NumberFormatter::create('it_IT', \NumberFormatter::CURRENCY));
-    }
+//    public function testSetFormatterShouldTeardownSettings()
+//    {
+//        $mock = $this->getMock('MoneyLaundry\Filter\Uncurrency', ['teardown']);
+//        $mock->expects($this->once())
+//             ->method('teardown');
+//        /** @var $mock \MoneyLaundry\Filter\Uncurrency */
+//        $mock->setFormatter(\NumberFormatter::create('it_IT', \NumberFormatter::CURRENCY));
+//    }
 
     public function testSetLocaleShouldTeardownSettings()
     {
@@ -216,6 +216,15 @@ class UncurrencyTest extends AbstractTest
             ->method('teardown');
         /** @var $mock \MoneyLaundry\Filter\Uncurrency */
         $mock->setLocale('en_US');
+    }
+
+    public function testChangeFormatter()
+    {
+        $filter = new Uncurrency('it_IT');
+        $custom = \NumberFormatter::create('en_US', \NumberFormatter::CURRENCY);
+        $filter->setFormatter($custom);
+        $this->assertEquals('en_US', $filter->getLocale());
+        $this->assertEquals($custom->getTextAttribute(\NumberFormatter::CURRENCY_CODE), $filter->getCurrencyCode());
     }
 
     public function testChangeLocaleOnFly()

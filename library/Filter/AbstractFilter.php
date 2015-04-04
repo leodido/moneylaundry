@@ -21,6 +21,11 @@ abstract class AbstractFilter extends AbstractLocale
     protected $formatter = null;
 
     /**
+     * @var bool
+     */
+    protected $isInitialized = false;
+
+    /**
      * Retrieve (and lazy load) the number formatter
      *
      * @return \NumberFormatter
@@ -44,8 +49,58 @@ abstract class AbstractFilter extends AbstractLocale
      */
     public function setFormatter(\NumberFormatter $formatter)
     {
+        $this->teardown();
         $this->formatter = $formatter;
+        $this->options['locale'] = $formatter->getLocale(\Locale::VALID_LOCALE);
 
         return $this;
+    }
+
+    /**
+     * TODO: doc
+     *
+     * @param   string|null $currencyCode
+     * @return  $this
+     */
+    public function setCurrencyCode($currencyCode = null)
+    {
+        $this->options['currency_code'] = $currencyCode;
+        return $this;
+    }
+
+    /**
+     * TODO: doc
+     *
+     * @return string
+     */
+    public function getCurrencyCode()
+    {
+        return $this->options['currency_code'];
+    }
+
+    /**
+     * Initialize settings
+     */
+    protected function initialize()
+    {
+        if (!$this->isInitialized) {
+            // Initialize formatter
+            $this->formatter = $this->getFormatter();
+            // Retrieve current intl currency code
+            if (!$this->getCurrencyCode()) {
+                $this->setCurrencyCode($this->formatter->getTextAttribute(\NumberFormatter::CURRENCY_CODE));
+            }
+            $this->isInitialized = true;
+        }
+    }
+
+    /**
+     * Teardown settings.
+     */
+    protected function teardown()
+    {
+        $this->formatter = null;
+        $this->options['currency_code'] = null;
+        $this->isInitialized = false;
     }
 }

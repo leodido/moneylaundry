@@ -76,11 +76,6 @@ class Uncurrency extends AbstractFilter
     protected $regexComponents = [];
 
     /**
-     * @var bool
-     */
-    protected $isInitialized = false;
-
-    /**
      * Ctor
      *
      * @param array|\Traversable|string|null    $localeOrOptions
@@ -122,11 +117,11 @@ class Uncurrency extends AbstractFilter
     protected function initialize()
     {
         if (!$this->isInitialized) {
-            $formatter = $this->getFormatter();
+            parent::initialize();
             // Disable scientific notation
-            $formatter->setSymbol(\NumberFormatter::EXPONENTIAL_SYMBOL, null);
+            $this->getFormatter()->setSymbol(\NumberFormatter::EXPONENTIAL_SYMBOL, null);
             // Setup symbols
-            $this->initSymbols($formatter);
+            $this->initSymbols();
             // Setup regex components
             $this->initRegexComponents();
             $this->isInitialized = true;
@@ -138,8 +133,8 @@ class Uncurrency extends AbstractFilter
      */
     protected function teardown()
     {
-        $this->formatter = null;
-        $this->isInitialized = false;
+        parent::teardown();
+
         $this->symbols = [];
         $this->regexComponents = [];
     }
@@ -147,47 +142,47 @@ class Uncurrency extends AbstractFilter
     /**
      * Init formatter symbols
      *
-     * @param \NumberFormatter $f
      * @return array
      */
-    protected function initSymbols($f)
+    protected function initSymbols()
     {
         if ($this->symbols == null) {
+            $formatter = $this->getFormatter();
             // Retrieve and process symbols
-            $this->symbols[self::CURRENCY_SYMBOL] = $f->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
-            $this->symbols[self::GROUP_SEPARATOR_SYMBOL] = $f->getSymbol(
+            $this->symbols[self::CURRENCY_SYMBOL] = $formatter->getSymbol(\NumberFormatter::CURRENCY_SYMBOL);
+            $this->symbols[self::GROUP_SEPARATOR_SYMBOL] = $formatter->getSymbol(
                 \NumberFormatter::MONETARY_GROUPING_SEPARATOR_SYMBOL
             );
-            $this->symbols[self::SEPARATOR_SYMBOL] = $f->getSymbol(
+            $this->symbols[self::SEPARATOR_SYMBOL] = $formatter->getSymbol(
                 \NumberFormatter::MONETARY_SEPARATOR_SYMBOL
             );
-            $this->symbols[self::INFINITY_SYMBOL] = $f->getSymbol(\NumberFormatter::INFINITY_SYMBOL);
-            $this->symbols[self::NAN_SYMBOL] = $f->getSymbol(\NumberFormatter::NAN_SYMBOL);
+            $this->symbols[self::INFINITY_SYMBOL] = $formatter->getSymbol(\NumberFormatter::INFINITY_SYMBOL);
+            $this->symbols[self::NAN_SYMBOL] = $formatter->getSymbol(\NumberFormatter::NAN_SYMBOL);
             // FIXME? remove currency symbol from pattern is needed
             $this->symbols[self::POSITIVE_PREFIX] = str_replace(
                 $this->symbols[self::CURRENCY_SYMBOL],
                 '',
-                $f->getTextAttribute(\NumberFormatter::POSITIVE_PREFIX)
+                $formatter->getTextAttribute(\NumberFormatter::POSITIVE_PREFIX)
             );
             // FIXME? remove currency symbol from pattern is needed
             $this->symbols[self::POSITIVE_SUFFIX] = str_replace(
                 $this->symbols[self::CURRENCY_SYMBOL],
                 '',
-                $f->getTextAttribute(\NumberFormatter::POSITIVE_SUFFIX)
+                $formatter->getTextAttribute(\NumberFormatter::POSITIVE_SUFFIX)
             );
             // FIXME? remove currency symbol from pattern is needed
             $this->symbols[self::NEGATIVE_PREFIX] = str_replace(
                 $this->symbols[self::CURRENCY_SYMBOL],
                 '',
-                $f->getTextAttribute(\NumberFormatter::NEGATIVE_PREFIX)
+                $formatter->getTextAttribute(\NumberFormatter::NEGATIVE_PREFIX)
             );
             // FIXME? remove currency symbol from pattern is needed
             $this->symbols[self::NEGATIVE_SUFFIX] = str_replace(
                 $this->symbols[self::CURRENCY_SYMBOL],
                 '',
-                $f->getTextAttribute(\NumberFormatter::NEGATIVE_SUFFIX)
+                $formatter->getTextAttribute(\NumberFormatter::NEGATIVE_SUFFIX)
             );
-            $this->symbols[self::FRACTION_DIGITS] = $f->getAttribute(\NumberFormatter::FRACTION_DIGITS);
+            $this->symbols[self::FRACTION_DIGITS] = $this->formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS);
         }
 
         return $this->symbols;
@@ -212,20 +207,20 @@ class Uncurrency extends AbstractFilter
         return $this->regexComponents;
     }
 
-    /**
-     * Set a number formatter
-     *
-     * Note that using a custom formatter will probably void the class functionalities.
-     *
-     * @param  \NumberFormatter $formatter
-     * @return $this
-     */
-    public function setFormatter(\NumberFormatter $formatter)
-    {
-        $this->teardown();
-
-        return parent::setFormatter($formatter);
-    }
+//    /**
+//     * Set a number formatter
+//     *
+//     * Note that using a custom formatter will probably void the class functionalities.
+//     *
+//     * @param  \NumberFormatter $formatter
+//     * @return $this
+//     */
+//    public function setFormatter(\NumberFormatter $formatter)
+//    {
+//        $this->teardown();
+//
+//        return parent::setFormatter($formatter);
+//    }
 
     /**
      * Set the locale
@@ -235,27 +230,9 @@ class Uncurrency extends AbstractFilter
      */
     public function setLocale($locale = null)
     {
-        $this->teardown(); // TODO: teardown only if locale != from current locale (improvement)
+        $this->teardown();
+
         return parent::setLocale($locale);
-    }
-
-    /**
-     * FIXME: feature(currencycode)
-     * @param   string|null $currencyCode
-     * @return  $this
-     */
-    public function setCurrencyCode($currencyCode = null)
-    {
-        $this->options['currency_code'] = $currencyCode;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCurrencyCode()
-    {
-        return $this->options['currency_code'];
     }
 
     /**
