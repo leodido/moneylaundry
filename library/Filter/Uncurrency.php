@@ -102,7 +102,7 @@ class Uncurrency extends AbstractFilter
                 $this->setOptions($localeOrOptions);
             } else {
                 $this->setLocale($localeOrOptions);
-                $this->setCurrencyCode($currencyCode); // FIXME: feature(currencycode)
+                $this->setCurrencyCode($currencyCode);
                 $this->setScaleCorrectness($scaleCorrectness);
                 $this->setCurrencyObligatoriness($currencyObligatoriness);
             }
@@ -187,7 +187,6 @@ class Uncurrency extends AbstractFilter
             // Input is a valid currency?
             if ($result !== false) {
                 ErrorHandler::stop();
-                // FIXME: feature(currencycode)
                 // Check that detect currency matches with specified currency
                 if ($resultCurrencyCode !== $this->getCurrencyCodeOrDefault()) { // FIXME? && $this->getCurrencyObligatoriness()
                     return $unfilteredValue;
@@ -219,12 +218,16 @@ class Uncurrency extends AbstractFilter
             }
 
             // Regex components
-            $symbols = array_filter(array_unique(array_values($symbols)));
+            $regexSymbols = array_filter(array_unique(array_values($symbols)));
             $numbers = $this->getRegexComponent(self::REGEX_NUMBERS);
             $flags = $this->getRegexComponent(self::REGEX_FLAGS);
 
             // Build allowed chars regex
-            $allowedChars = sprintf('#^[%s]+$#%s', $numbers . implode('', array_map('preg_quote', $symbols)), $flags);
+            $allowedChars = sprintf(
+                '#^[%s]+$#%s',
+                $numbers . implode('', array_map('preg_quote', $regexSymbols)),
+                $flags
+            );
 
             // Check that value contains only allowed characters (digits, group and decimal separator)
             $result = false;

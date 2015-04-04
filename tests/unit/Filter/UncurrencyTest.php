@@ -269,7 +269,7 @@ class UncurrencyTest extends AbstractTest
 
     public function testFiltersInfinityValues()
     {
-        $filter = new Uncurrency('ar_AE', false, true);
+        $filter = new Uncurrency('ar_AE', null, false, true);
         $formatter = $filter->getFormatter();
 
         $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
@@ -280,7 +280,7 @@ class UncurrencyTest extends AbstractTest
         $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
         $this->assertEquals(INF, $filter->filter('∞'));
 
-        $filter = new Uncurrency('ru_RU', false, true);
+        $filter = new Uncurrency('ru_RU', null, false, true);
         $formatter = $filter->getFormatter();
 
         $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
@@ -291,7 +291,7 @@ class UncurrencyTest extends AbstractTest
         $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
         $this->assertEquals(INF, $filter->filter('∞'));
 
-        $filter = new Uncurrency('bn_IN', false, true);
+        $filter = new Uncurrency('bn_IN', null, false, true);
         $formatter = $filter->getFormatter();
 
         $this->assertEquals(INF, $filter->filter($formatter->format(INF)));
@@ -331,7 +331,7 @@ class UncurrencyTest extends AbstractTest
     public function testFilter()
     {
         // (1) italian - italy, (2) correct number of decimal places not mandatory, (3) currency not mandatory
-        $filter = new Uncurrency('it_IT', false, false);
+        $filter = new Uncurrency('it_IT', null, false, false);
         $formatter = $filter->getFormatter();
 
         // Allowed
@@ -377,7 +377,7 @@ class UncurrencyTest extends AbstractTest
         $this->assertEquals(-0.01, $filter->filter($formatter->format(-0.01))); // -0,01 €
 
         // bengali - bangladesh, (2) correct number of decimal places not mandatory, (3) currency not mandatory
-        $filter = new Uncurrency('bn_BD', false, false);
+        $filter = new Uncurrency('bn_BD', null, false, false);
         $formatter = $filter->getFormatter();
 
         // Allowed
