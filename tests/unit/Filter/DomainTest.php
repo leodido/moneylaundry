@@ -42,9 +42,12 @@ class DomainTest extends AbstractTest
             ]
         ];
 
-        array_walk($validDomainValuesByCurrencyCode, function(&$array) use ($validDomainValues) {
-            $array = array_merge($array, $validDomainValues);
-        });
+        array_walk(
+            $validDomainValuesByCurrencyCode,
+            function (&$array) use ($validDomainValues) {
+                $array = array_merge($array, $validDomainValues);
+            }
+        );
 
         $invalidDomainValues = [
             -1, // int not allowed
@@ -78,12 +81,15 @@ class DomainTest extends AbstractTest
         ];
 
 
-        array_walk($invalidDomainValuesByCurrencyCode, function(&$array) use ($invalidDomainValues) {
-            $array = array_merge($array, $invalidDomainValues);
-        });
+        array_walk(
+            $invalidDomainValuesByCurrencyCode,
+            function (&$array) use ($invalidDomainValues) {
+                $array = array_merge($array, $invalidDomainValues);
+            }
+        );
 
         // All available locales
-        $locales   = \ResourceBundle::getLocales('');
+        $locales = \ResourceBundle::getLocales('');
 
         $data = [
 
@@ -108,8 +114,7 @@ class DomainTest extends AbstractTest
         return $data;
     }
 
-
-    protected function _assertSame($value, $expected)
+    protected function assertSameOrNaN($value, $expected)
     {
         if (is_float($value) && is_nan($value)) { // NaN != NaN
             return $this->assertTrue(is_nan($expected));
@@ -117,7 +122,7 @@ class DomainTest extends AbstractTest
         return $this->assertSame($value, $expected);
     }
 
-    protected function _assertNotSame($value, $expected)
+    protected function assertNotSameNorNaN($value, $expected)
     {
         if (is_float($value) && is_nan($value)) { // NaN != NaN
             return $this->assertFalse(is_nan($expected));
@@ -129,7 +134,7 @@ class DomainTest extends AbstractTest
      * @param string $locale
      * @param string $currencyCode
      * @param string $value
-     * @param string $isValid
+     * @param bool $isValid
      *
      * @dataProvider getStrictDomainDataProvider
      */
@@ -142,12 +147,12 @@ class DomainTest extends AbstractTest
         $codomainValue = $currency->filter($value);
         $resultValue = $uncurrency->filter($codomainValue);
 
-        $this->_assertSame($value, $resultValue);
+        $this->assertSameOrNaN($value, $resultValue);
 
         if ($isValid) {
-            $this->_assertNotSame($value, $codomainValue);
+            $this->assertNotSameNorNaN($value, $codomainValue);
         } else {
-            $this->_assertSame($value, $codomainValue);
+            $this->assertSameOrNaN($value, $codomainValue);
         }
     }
 }

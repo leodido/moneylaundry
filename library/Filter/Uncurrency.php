@@ -181,8 +181,8 @@ class Uncurrency extends AbstractFilter
             /*
              * parseCurrency MODE
              *
-             * The following parsing mode can work with a multiple currencies.
-             * TODO: could be usefull if
+             * The following parsing mode can work with multiple currencies.
+             * TODO: could be useful if
              * Also it should be more strict and faster than parseCurrency getCurrencyObligatoriness() == false
              */
 //            $result = $formatter->parseCurrency($value, $resultCurrencyCode, $position);
@@ -193,8 +193,7 @@ class Uncurrency extends AbstractFilter
              * The following parsing mode can work with a predefined currency code ONLY.
              * Also it should be more strict and faster than parseCurrency
              */
-            $resultCurrencyCode = $this->setupCurrencyCode();
-            $formatter->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $resultCurrencyCode);
+            $this->setupCurrencyCode();
             $result = $formatter->parse($value, \NumberFormatter::TYPE_DOUBLE, $position);
 
             // Input is a valid currency and the result is within the codomain?
