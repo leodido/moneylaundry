@@ -88,15 +88,6 @@ class Uncurrency extends AbstractFilter
         $currencyObligatoriness = self::DEFAULT_CURRENCY_OBLIGATORINESS
     ) {
         parent::__construct();
-        // @codeCoverageIgnoreStart
-        if (!extension_loaded('mbstring')) {
-            throw new I18nException\ExtensionNotLoadedException(sprintf(
-                '%s component requires the mbstring PHP extension',
-                __NAMESPACE__
-            ));
-        }
-        // @codeCoverageIgnoreEnd
-
         if ($localeOrOptions !== null) {
             if (static::isOptions($localeOrOptions)) {
                 $this->setOptions($localeOrOptions);
@@ -193,7 +184,7 @@ class Uncurrency extends AbstractFilter
                 }
 
                 // Check if the parsing finished before the end of the input
-                if ($position !== mb_strlen($value, 'UTF-8')) {
+                if ($position !== grapheme_strlen($value)) {
                     return $unfilteredValue;
                 }
 
@@ -423,7 +414,9 @@ class Uncurrency extends AbstractFilter
      */
     protected function countDecimalDigits($number, $separatorSymbol)
     {
-        $decimals = mb_substr(mb_strrchr($number, $separatorSymbol, false), 1);
+        // FIXME: double check decimal extraction logic
+        $lastOccurence = grapheme_strrpos($number, $separatorSymbol);
+        $decimals = grapheme_substr($number, $lastOccurence + 1);
         return preg_match_all(
             sprintf(
                 '#%s#%s',

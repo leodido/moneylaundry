@@ -77,7 +77,6 @@ class UncurrencyTest extends AbstractIntegration
      */
     public function valuesProvider()
     {
-        mb_internal_encoding('UTF-8');
 
         $data = [];
         $values = [0, 0.1, 0.01, 1000, 1234.61, 12345678.90];
@@ -197,13 +196,13 @@ class UncurrencyTest extends AbstractIntegration
                 $data[] = [$locale, true, true, $value, $currency]; // Filtered
 
                 // Create currency value with letters inside
-                $randomPos = rand(0, mb_strlen($currency) - 1);
-                $currency = mb_substr($currency, 0, $randomPos) . 'X' . mb_substr($currency, $randomPos);
+                $randomPos = rand(0, grapheme_strlen($currency) - 1);
+                $currency = mb_substr($currency, 0, $randomPos) . 'X' . grapheme_substr($currency, $randomPos);
 //                echo $currency . PHP_EOL;
                 $daa[] = [$locale, true, true, $currency, $currency]; // Not filtered
 
                 // Create currency value (w/ currency symbol) (w/o group separators)
-                if (mb_strpos($currency, $groupSep) !== false) {
+                if (grapheme_strpos($currency, $groupSep) !== false) {
                     $formatter->setSymbol(\NumberFormatter::MONETARY_GROUPING_SEPARATOR_SYMBOL, null);
                     $currency = $formatter->formatCurrency($value, $isoSymbol);
 //                    echo $currency . PHP_EOL;
@@ -216,7 +215,7 @@ class UncurrencyTest extends AbstractIntegration
 //                echo $currency . PHP_EOL;
                 $data[] = [$locale, true, true, $value, $currency]; // Filtered
                 // Create currency value with ISO currency symbol (w/o group separators)
-                if (mb_strpos($currency, $groupSep) !== false) {
+                if (grapheme_strpos($currency, $groupSep) !== false) {
                     $formatter->setSymbol(\NumberFormatter::MONETARY_GROUPING_SEPARATOR_SYMBOL, null);
                     $currency = $formatter->format($value);
 //                    echo $currency . PHP_EOL;
