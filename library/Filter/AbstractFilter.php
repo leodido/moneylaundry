@@ -75,24 +75,27 @@ abstract class AbstractFilter extends AbstractLocale
     public function getCurrencyCode()
     {
         if (!isset($this->options['currency_code'])) {
+            if ($this->formatter) {
+                return $this->formatter->getTextAttribute(\NumberFormatter::CURRENCY_CODE);
+            }
             return null;
         }
         return $this->options['currency_code'];
     }
 
     /**
-     * Retrieve the currency code or its default from NumberFormatter
+     * Setup the formatter's currency code, then return it.
      *
+     * Use the set currency code if any or the default from NumberFormatter.
      * Note that it creates a NumberFormatter instance if it is not yet instantiated.
      *
      * @return string
      */
-    protected function getCurrencyCodeOrDefault()
+    protected function setupCurrencyCode()
     {
+        $formatter = $this->getFormatter();
         $currencyCode = $this->getCurrencyCode();
-        if (!$currencyCode) {
-            $currencyCode = $this->getFormatter()->getTextAttribute(\NumberFormatter::CURRENCY_CODE);
-        }
+        $this->getFormatter()->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $currencyCode);
         return $currencyCode;
     }
 

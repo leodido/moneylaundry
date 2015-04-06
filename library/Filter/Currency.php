@@ -66,13 +66,21 @@ class Currency extends AbstractFilter
             ErrorHandler::start();
 
             $formatter = $this->getFormatter();
-            $result = $formatter->formatCurrency($value, $this->getCurrencyCodeOrDefault());
+            $currencyCode = $this->setupCurrencyCode();
+            $result = $formatter->formatCurrency($value, $currencyCode);
+
+            // FIXME: temporary fraction digits check
+            $precisionCheck = $formatter->parse($result, \NumberFormatter::TYPE_DOUBLE) === $value;
+
+
             ErrorHandler::stop();
+
+
 
             // FIXME: in strict mode, $result should pass only if the currency's fraction digits
             // can accomodate the $value decimal precision
             // i.e. EUR (franction digits = 2) must NOT allow double(1.23432423432)
-            return false !== $result ? $result : $value;
+            return false !== $result && $precisionCheck ? $result : $value;
         }
 
         return $value;

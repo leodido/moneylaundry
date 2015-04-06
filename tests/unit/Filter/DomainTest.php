@@ -66,10 +66,14 @@ class DomainTest extends AbstractTest
 
         $invalidDomainValuesByCurrencyCode = [
             'EUR' => [
+                0.123456789123456789 // EUR has only 2 fraction digits
             ],
             'GBP' => [
+                0.123456789123456789 // GBP has only 2 fraction digits
             ],
             'VND' => [
+                0.123456789123456789, // VND has only 2 fraction digits
+                0.5 // VND has only 0 fraction digits
             ]
         ];
 
@@ -85,7 +89,6 @@ class DomainTest extends AbstractTest
 
             // SPECIAL CASEs
             //locale, currency code, value, is a valid domain value?
-//             ['it_IT', 'EUR', 0.123456789123456789, false], // EUR has only 2 fraction digits
         ];
 
         foreach ($locales as $locale) {

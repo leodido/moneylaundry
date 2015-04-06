@@ -193,7 +193,7 @@ class Uncurrency extends AbstractFilter
              * The following parsing mode can work with a predefined currency code ONLY.
              * Also it should be more strict and faster than parseCurrency
              */
-            $resultCurrencyCode = $this->getCurrencyCodeOrDefault();
+            $resultCurrencyCode = $this->setupCurrencyCode();
             $formatter->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $resultCurrencyCode);
             $result = $formatter->parse($value, \NumberFormatter::TYPE_DOUBLE, $position);
 
@@ -203,7 +203,7 @@ class Uncurrency extends AbstractFilter
 
                 // Check that detect currency matches with specified currency
                 // NOT used with 'parse MODE'
-//                 if ($resultCurrencyCode !== $this->getCurrencyCodeOrDefault()) {
+//                 if ($resultCurrencyCode !== $this->setupCurrencyCode()) {
 //                     return $unfilteredValue;
 //                 }
 
