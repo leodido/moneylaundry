@@ -198,7 +198,7 @@ class Uncurrency extends AbstractFilter
             $result = $formatter->parse($value, \NumberFormatter::TYPE_DOUBLE, $position);
 
             // Input is a valid currency and the result is within the codomain?
-            if ($result !== false && ((is_float($result) && !is_infinite($result) && !is_nan($result)) || is_int($result))) {
+            if ($result !== false && ((is_float($result) && !is_infinite($result) && !is_nan($result)))) {
                 ErrorHandler::stop();
 
                 // Check that detect currency matches with specified currency
@@ -220,7 +220,7 @@ class Uncurrency extends AbstractFilter
                 }
                 */
 
-                return ((int) $result) == $result ? (int) $result : $result;
+                return $result;
             }
 
             // At this stage result is FALSE and input probably is not a well-formatted currency

@@ -62,12 +62,7 @@ class Currency extends AbstractFilter
      */
     public function filter($value)
     {
-        if (!is_scalar($value) || is_bool($value)) {
-            return $value;
-        }
-
-
-        if (is_int($value) || (is_float($value) && !is_nan($value) && !is_infinite($value))) {
+        if ((is_float($value) && !is_nan($value) && !is_infinite($value))) {
             ErrorHandler::start();
 
             $formatter = $this->getFormatter();

@@ -20,17 +20,36 @@ class DomainTest extends AbstractTest
 
     public function getStrictDomainDataProvider()
     {
-
+        // valid values for all currencies
         $validDomainValues = [
-           -4.5,
-           -1,
-           0,
-           1,
-           2.3,
-           22.11,
+           (float) -10,
+           (float) 0,
+           (float) 10,
         ];
 
+        $validDomainValuesByCurrencyCode = [
+            'EUR' => [
+                -4.5,
+                2.3,
+                22.11,
+            ],
+            'GBP' => [
+                -4.5,
+                2.3,
+                22.11,
+            ],
+            'VND' => [
+            ]
+        ];
+
+        array_walk($validDomainValuesByCurrencyCode, function(&$array) use ($validDomainValues) {
+            $array = array_merge($array, $validDomainValues);
+        });
+
         $invalidDomainValues = [
+            -1, // int not allowed
+            0, // int not allowed
+            1, // int not allowed
             null,
             false,
             true,
@@ -42,15 +61,22 @@ class DomainTest extends AbstractTest
             new \stdClass,
             NAN,
             INF,
+            -INF,
+        ];
+
+        $invalidDomainValuesByCurrencyCode = [
+            'EUR' => [
+            ],
+            'GBP' => [
+            ],
+            'VND' => [
+            ]
         ];
 
 
-        $currencies = [
-            'EUR',
-            'GBP',
-            'USD',
-//             'VND' // Not working due to fraction digits
-        ];
+        array_walk($invalidDomainValuesByCurrencyCode, function(&$array) use ($invalidDomainValues) {
+            $array = array_merge($array, $invalidDomainValues);
+        });
 
         // All available locales
         $locales   = \ResourceBundle::getLocales('');
@@ -63,11 +89,13 @@ class DomainTest extends AbstractTest
         ];
 
         foreach ($locales as $locale) {
-            foreach ($currencies as $currencyCode) {
-                foreach ($validDomainValues as $value) {
+            foreach ($validDomainValuesByCurrencyCode as $currencyCode => $values) {
+                foreach ($values as $value) {
                     $data[] = [$locale, $currencyCode, $value, true];
                 }
-                foreach ($invalidDomainValues as $value) {
+            }
+            foreach ($invalidDomainValuesByCurrencyCode as $currencyCode => $values) {
+                foreach ($values as $value) {
                     $data[] = [$locale, $currencyCode, $value, false];
                 }
             }
