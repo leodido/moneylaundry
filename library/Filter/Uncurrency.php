@@ -154,11 +154,14 @@ class Uncurrency extends AbstractFilter
     {
         if (is_string($value)) {
             // Initialization
-            $currency = $this->getFormatter();
+            $formatter = $this->getFormatter();
+
+
             // Disable scientific notation
-            $currency->setSymbol(\NumberFormatter::EXPONENTIAL_SYMBOL, null);
+            $formatter->setSymbol(\NumberFormatter::EXPONENTIAL_SYMBOL, null);
             // Retrieve symbols
-            $symbols = $this->getSymbols();
+            $symbols = $this->getSymbols(); // FIXME: parse and parseCurrancy could use different symbols
+                                            // when used with non default currency code
 
             // Store original value
             $unfilteredValue = $value;
@@ -167,49 +170,62 @@ class Uncurrency extends AbstractFilter
             $value = str_replace("\x20", "\xC2\xA0", $value);
 
             // Get decimal place info
+            // FIXME: parse and parseCurrancy could use different symbols
+            // when used with non default currency code
             $numFractionDigits = $symbols[self::FRACTION_DIGITS];
             $numDecimals = $this->countDecimalDigits($value, $symbols[self::SEPARATOR_SYMBOL]);
 
             // Parse as currency
             ErrorHandler::start();
             $position = 0;
-            $result = $currency->parseCurrency($value, $resultCurrencyCode, $position);
+            /*
+             * parseCurrency MODE
+             *
+             * The following parsing mode can work with a multiple currencies.
+             * TODO: could be usefull if
+             * Also it should be more strict and faster than parseCurrency getCurrencyObligatoriness() == false
+             */
+//            $result = $formatter->parseCurrency($value, $resultCurrencyCode, $position);
 
-            // Input is a valid currency?
-            if ($result !== false) {
+            /*
+             * parse MODE
+             *
+             * The following parsing mode can work with a predefined currency code ONLY.
+             * Also it should be more strict and faster than parseCurrency
+             */
+            $resultCurrencyCode = $this->getCurrencyCodeOrDefault();
+            $formatter->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $resultCurrencyCode);
+            $result = $formatter->parse($value, \NumberFormatter::TYPE_DOUBLE, $position);
+
+            // Input is a valid currency and the result is within the codomain?
+            if ($result !== false && ((is_float($result) && !is_infinite($result) && !is_nan($result)) || is_int($result))) {
                 ErrorHandler::stop();
+
                 // Check that detect currency matches with specified currency
-                if ($resultCurrencyCode !== $this->getCurrencyCodeOrDefault()) { // FIXME? && $this->getCurrencyObligatoriness()
-                    return $unfilteredValue;
-                }
+                // NOT used with 'parse MODE'
+//                 if ($resultCurrencyCode !== $this->getCurrencyCodeOrDefault()) {
+//                     return $unfilteredValue;
+//                 }
 
                 // Check if the parsing finished before the end of the input
                 if ($position !== grapheme_strlen($value)) {
                     return $unfilteredValue;
                 }
 
-                var_dump($result);
-                var_dump($numDecimals);
-                var_dump($numFractionDigits);
-
+                /*
+                // FIXME: currenty, it doesn't work because parse and parseCurrancy could use different symbols
                 // Check if the number of decimal digits match the requirement (unless the result is not finite)
                 if ($this->getScaleCorrectness() && ($numDecimals !== $numFractionDigits && is_finite($result))) {
                     return $unfilteredValue;
                 }
+                */
 
-
-
-                return $result;
-            }
-
-            // NAN handling
-            if ($symbols[self::NAN_SYMBOL] === $value) { // FIXME? && !$this->getCurrencyObligatoriness()
-                return NAN; // Return the double NAN
+                return ((int) $result) == $result ? (int) $result : $result;
             }
 
             // At this stage result is FALSE and input probably is not a well-formatted currency
 
-            // Check if the currency symbol is mandatory
+            // Check if the currency symbol is mandatory (assiming 'parse MODE')
             if ($this->getCurrencyObligatoriness()) {
                 ErrorHandler::stop();
                 return $unfilteredValue;

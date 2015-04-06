@@ -197,7 +197,7 @@ class UncurrencyTest extends AbstractIntegration
 
                 // Create currency value with letters inside
                 $randomPos = rand(0, grapheme_strlen($currency) - 1);
-                $currency = mb_substr($currency, 0, $randomPos) . 'X' . grapheme_substr($currency, $randomPos);
+                $currency = grapheme_substr($currency, 0, $randomPos) . 'X' . grapheme_substr($currency, $randomPos);
 //                echo $currency . PHP_EOL;
                 $daa[] = [$locale, true, true, $currency, $currency]; // Not filtered
 

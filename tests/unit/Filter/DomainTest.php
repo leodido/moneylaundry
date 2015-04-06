@@ -22,13 +22,12 @@ class DomainTest extends AbstractTest
     {
 
         $validDomainValues = [
-            -4.5,
-            -1,
-            0,
-            1,
-            2.3,
-            22.11,
-            INF,
+           -4.5,
+           -1,
+           0,
+           1,
+           2.3,
+           22.11,
         ];
 
         $invalidDomainValues = [
@@ -42,32 +41,35 @@ class DomainTest extends AbstractTest
             ['foo' => 'bar'],
             new \stdClass,
             NAN,
+            INF,
         ];
 
 
         $currencies = [
             'EUR',
-//            'GBP',
-//            'USD'
+            'GBP',
+            'USD',
+//             'VND' // Not working due to fraction digits
         ];
 
         // All available locales
-        $locales = ['vi_VN']; // \ResourceBundle::getLocales('');
+        $locales   = \ResourceBundle::getLocales('');
 
-//        $data = [
-//            // SPECIAL CASEs
-//            //locale, currency code, value, is a valid domain value?
-//            ['it_IT', 'EUR', 0.123456789123456789, false], // EUR has only 2 fraction digits
-//        ];
+        $data = [
+
+            // SPECIAL CASEs
+            //locale, currency code, value, is a valid domain value?
+//             ['it_IT', 'EUR', 0.123456789123456789, false], // EUR has only 2 fraction digits
+        ];
 
         foreach ($locales as $locale) {
             foreach ($currencies as $currencyCode) {
                 foreach ($validDomainValues as $value) {
                     $data[] = [$locale, $currencyCode, $value, true];
                 }
-//                foreach ($invalidDomainValues as $value) {
-//                    $data[] = [$locale, $currencyCode, $value, false];
-//                }
+                foreach ($invalidDomainValues as $value) {
+                    $data[] = [$locale, $currencyCode, $value, false];
+                }
             }
         }
 
@@ -75,28 +77,46 @@ class DomainTest extends AbstractTest
         return $data;
     }
 
+
+    protected function _assertSame($value, $expected)
+    {
+        if (is_float($value) && is_nan($value)) { // NaN != NaN
+            return $this->assertTrue(is_nan($expected));
+        }
+        return $this->assertSame($value, $expected);
+    }
+
+    protected function _assertNotSame($value, $expected)
+    {
+        if (is_float($value) && is_nan($value)) { // NaN != NaN
+            return $this->assertFalse(is_nan($expected));
+        }
+        return $this->assertNotSame($value, $expected);
+    }
+
     /**
      * @param string $locale
      * @param string $currencyCode
      * @param string $value
-     * @param bool $isValid
+     * @param string $isValid
      *
      * @dataProvider getStrictDomainDataProvider
      */
     public function testStrictDomain($locale, $currencyCode, $value, $isValid = true)
     {
+        ini_set('memory_limit', '1G');
         $currency = new Currency($locale, $currencyCode);
         $uncurrency = new Uncurrency($locale, $currencyCode);
 
-        var_dump($locale);
-        var_dump($currency->filter($value));
+        $codomainValue = $currency->filter($value);
+        $resultValue = $uncurrency->filter($codomainValue);
 
-        $resultValue = $uncurrency->filter($currency->filter($value));
+        $this->_assertSame($value, $resultValue);
 
         if ($isValid) {
-            $this->assertEquals($value, $resultValue);
+            $this->_assertNotSame($value, $codomainValue);
         } else {
-            $this->assertNotEquals($value, $resultValue);
+            $this->_assertSame($value, $codomainValue);
         }
     }
 }

@@ -66,14 +66,17 @@ class Currency extends AbstractFilter
             return $value;
         }
 
-        if (is_float($value) || is_int($value)) {
+
+        if (is_int($value) || (is_float($value) && !is_nan($value) && !is_infinite($value))) {
             ErrorHandler::start();
 
             $formatter = $this->getFormatter();
             $result = $formatter->formatCurrency($value, $this->getCurrencyCodeOrDefault());
-
             ErrorHandler::stop();
 
+            // FIXME: in strict mode, $result should pass only if the currency's fraction digits
+            // can accomodate the $value decimal precision
+            // i.e. EUR (franction digits = 2) must NOT allow double(1.23432423432)
             return false !== $result ? $result : $value;
         }
 
