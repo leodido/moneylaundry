@@ -114,6 +114,20 @@ class DomainTest extends AbstractTest
         return $data;
     }
 
+    public function getStrictCodomainDataProvider()
+    {
+        return [
+            //locale, currency code, value, is a valid domain value?
+            ['en_GB', 'GBP', '£11.33', true],
+            ['en_GB', 'GBP', '£11.00', true],
+            ['en_GB', 'GBP', '£1E3', false],
+//             ['en_GB', 'GBP', '£11', false], // GBP has only 2 fraction digits
+            ['en_GB', 'GBP', '£11.333', false], // GBP has only 2 fraction digits
+
+        ];
+    }
+
+
     protected function assertSameOrNaN($value, $expected)
     {
         if (is_float($value) && is_nan($value)) { // NaN != NaN
@@ -128,6 +142,32 @@ class DomainTest extends AbstractTest
             return $this->assertFalse(is_nan($expected));
         }
         return $this->assertNotSame($value, $expected);
+    }
+
+    protected function assertInDomain($locale, $currencyCode, $value)
+    {
+        $this->assertInternalType('double', $value);
+
+        $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+        $formatter->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $currencyCode);
+
+        $codomainValue = $formatter->formatCurrency($value, $currencyCode);
+        $testValue     = $formatter->parse($codomainValue, \NumberFormatter::TYPE_DOUBLE);
+
+        $this->assertSame($value, $testValue);
+    }
+
+    protected function assertInCodomain($locale, $currencyCode, $value)
+    {
+        $this->assertInternalType('string', $value);
+
+        $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+        $formatter->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $currencyCode);
+
+        $domainValue = $formatter->parse($value, \NumberFormatter::TYPE_DOUBLE);
+        $testValue   = $formatter->formatCurrency($domainValue, $currencyCode);
+
+        $this->assertSame($value, $testValue);
     }
 
     /**
@@ -145,14 +185,48 @@ class DomainTest extends AbstractTest
         $uncurrency = new Uncurrency($locale, $currencyCode);
 
         $codomainValue = $currency->filter($value);
-        $resultValue = $uncurrency->filter($codomainValue);
+        $domainValue = $uncurrency->filter($codomainValue);
 
-        $this->assertSameOrNaN($value, $resultValue);
+        $this->assertSameOrNaN($value, $domainValue);
 
         if ($isValid) {
             $this->assertNotSameNorNaN($value, $codomainValue);
+            $this->assertInCodomain($locale, $currencyCode, $codomainValue);
+            $this->assertInDomain($locale, $currencyCode, $domainValue);
         } else {
             $this->assertSameOrNaN($value, $codomainValue);
+        }
+    }
+
+    /**
+     * @param string $locale
+     * @param string $currencyCode
+     * @param string $value
+     * @param bool $isValid
+     *
+     * @dataProvider getStrictCodomainDataProvider
+     */
+    public function testStrictCodomain($locale, $currencyCode, $value, $isValid = true)
+    {
+        ini_set('memory_limit', '1G');
+        $currency = new Currency($locale, $currencyCode);
+        $uncurrency = new Uncurrency($locale, $currencyCode);
+
+        $domainValue = $uncurrency->filter($value);
+        $codomainValue = $currency->filter($domainValue);
+//         var_dump($value);
+//         var_dump($domainValue);
+//         var_dump($codomainValue);
+
+
+        $this->assertSameOrNaN($value, $codomainValue);
+
+        if ($isValid) {
+            $this->assertNotSameNorNaN($value, $domainValue);
+            $this->assertInCodomain($locale, $currencyCode, $codomainValue);
+            $this->assertInDomain($locale, $currencyCode, $domainValue);
+        } else {
+            $this->assertSameOrNaN($value, $domainValue);
         }
     }
 }

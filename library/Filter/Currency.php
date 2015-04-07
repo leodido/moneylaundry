@@ -62,34 +62,35 @@ class Currency extends AbstractFilter
      */
     public function filter($value)
     {
+        $unfilteredValue = $value;
         if ((is_float($value) && !is_nan($value) && !is_infinite($value))) {
             ErrorHandler::start();
 
             $formatter = $this->getFormatter();
             $currencyCode = $this->setupCurrencyCode();
             $result = $formatter->formatCurrency($value, $currencyCode);
-
-            // FIXME: temporary fraction digits check
-            $precisionCheck = $formatter->parse($result, \NumberFormatter::TYPE_DOUBLE) === $value;
-
-
+            //$formatter->parse($result, \NumberFormatter::TYPE_DOUBLE) === $value;
             ErrorHandler::stop();
 
+            if ($result === false) {
+                return $unfilteredValue;
+            }
 
 
-            // FIXME: in strict mode, $result should pass only if the currency's fraction digits
+            $precision = $formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS);
+
+            // in strict mode, $result should pass only if the currency's fraction digits
             // can accomodate the $value decimal precision
             // i.e. EUR (franction digits = 2) must NOT allow double(1.23432423432)
-            return false !== $result && $precisionCheck ? $result : $value;
+            if ($this->getScaleCorrectness() && !$this->hasFloatDecimalPrecision($value, $precision)) {
+                return $unfilteredValue;
+            }
+
+            return $result;
         }
 
-        return $value;
+        return $unfilteredValue;
 
-//        // Check it is not a numeric written in scientific notation
-//        $validator = new ScientificNotation(['locale' => $this->getLocale()]);
-//        if ($validator->isValid($value)) {
-//            return $value;
-//        }
 //
 //        // From string to number
 //        $formatter = new NumberFormat($this->getLocale(), \NumberFormatter::DECIMAL);

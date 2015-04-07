@@ -16,6 +16,8 @@ use Zend\I18n\Exception;
  */
 abstract class AbstractFilter extends AbstractLocale
 {
+    const DEFAULT_SCALE_CORRECTNESS = true;
+
     /**
      * @var \NumberFormatter
      */
@@ -109,5 +111,39 @@ abstract class AbstractFilter extends AbstractLocale
     {
         $this->formatter = null;
         return parent::setLocale($locale);
+    }
+
+
+    /**
+     * Set whether to check or not that the number of decimal places is as requested by current locale pattern
+     *
+     * @param  bool $exactFractionDigits
+     * @return $this
+     */
+    public function setScaleCorrectness($exactFractionDigits)
+    {
+        $this->options['scale_correctness'] = (bool) $exactFractionDigits;
+        return $this;
+    }
+
+    /**
+     * The fraction digits have to be spiecified and exact?
+     * @todo improve description
+     *
+     * @return bool
+     */
+    public function getScaleCorrectness()
+    {
+        if (!isset($this->options['scale_correctness'])) {
+            $this->options['scale_correctness'] = self::DEFAULT_SCALE_CORRECTNESS;
+        }
+        return $this->options['scale_correctness'];
+    }
+
+
+    protected function hasFloatDecimalPrecision($floatValue, $precision, $roundingMode = PHP_ROUND_HALF_UP)
+    {
+        $testValue = round($floatValue, $precision, $roundingMode);
+        return $floatValue === $testValue;
     }
 }

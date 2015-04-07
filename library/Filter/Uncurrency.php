@@ -25,7 +25,6 @@ use Zend\Stdlib\StringUtils;
  */
 class Uncurrency extends AbstractFilter
 {
-    const DEFAULT_SCALE_CORRECTNESS = true;
     const DEFAULT_CURRENCY_OBLIGATORINESS = true;
 
     const REGEX_NUMBERS = 0;
@@ -100,27 +99,6 @@ class Uncurrency extends AbstractFilter
         }
     }
 
-    /**
-     * Set whether to check or not that the number of decimal places is as requested by current locale pattern
-     *
-     * @param  bool $exactFractionDigits
-     * @return $this
-     */
-    public function setScaleCorrectness($exactFractionDigits)
-    {
-        $this->options['scale_correctness'] = (bool) $exactFractionDigits;
-        return $this;
-    }
-
-    /**
-     * The fraction digits have to be spiecified and exact?
-     *
-     * @return bool
-     */
-    public function getScaleCorrectness()
-    {
-        return $this->options['scale_correctness'];
-    }
 
     /**
      * Set whether the currency symbol is mandatory or not
@@ -156,12 +134,8 @@ class Uncurrency extends AbstractFilter
             // Initialization
             $formatter = $this->getFormatter();
 
-
             // Disable scientific notation
             $formatter->setSymbol(\NumberFormatter::EXPONENTIAL_SYMBOL, null);
-            // Retrieve symbols
-            $symbols = $this->getSymbols(); // FIXME: parse and parseCurrancy could use different symbols
-                                            // when used with non default currency code
 
             // Store original value
             $unfilteredValue = $value;
@@ -169,11 +143,6 @@ class Uncurrency extends AbstractFilter
             // Replace spaces with NBSP (non breaking spaces)
             $value = str_replace("\x20", "\xC2\xA0", $value);
 
-            // Get decimal place info
-            // FIXME: parse and parseCurrancy could use different symbols
-            // when used with non default currency code
-            $numFractionDigits = $symbols[self::FRACTION_DIGITS];
-            $numDecimals = $this->countDecimalDigits($value, $symbols[self::SEPARATOR_SYMBOL]);
 
             // Parse as currency
             ErrorHandler::start();
@@ -195,21 +164,20 @@ class Uncurrency extends AbstractFilter
              */
             $this->setupCurrencyCode();
             $result = $formatter->parse($value, \NumberFormatter::TYPE_DOUBLE, $position);
+            $fractionDigits = $formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS);
 
             // Input is a valid currency and the result is within the codomain?
             if ($result !== false && ((is_float($result) && !is_infinite($result) && !is_nan($result)))) {
                 ErrorHandler::stop();
 
-                // Check that detect currency matches with specified currency
-                // NOT used with 'parse MODE'
-//                 if ($resultCurrencyCode !== $this->setupCurrencyCode()) {
-//                     return $unfilteredValue;
-//                 }
 
                 // Check if the parsing finished before the end of the input
                 if ($position !== grapheme_strlen($value)) {
                     return $unfilteredValue;
                 }
+
+
+                $checkPrecision = $this->hasFloatDecimalPrecision($result, $fractionDigits);
 
                 /*
                 // FIXME: currenty, it doesn't work because parse and parseCurrancy could use different symbols
@@ -219,8 +187,13 @@ class Uncurrency extends AbstractFilter
                 }
                 */
 
-                return $result;
+                return $checkPrecision ? $result : $unfilteredValue;
             }
+
+            // Retrieve symbols
+            $symbols = $this->getSymbols(); // FIXME: parse and parseCurrancy could use different symbols
+            // when used with non default currency code
+
 
             // At this stage result is FALSE and input probably is not a well-formatted currency
 
@@ -247,8 +220,13 @@ class Uncurrency extends AbstractFilter
             if (preg_match($allowedChars, $value)) {
                 $decimal = \NumberFormatter::create($this->getLocale(), \NumberFormatter::DECIMAL);
 
+                // Get decimal place info
+                // FIXME: parse and parseCurrancy could use different symbols
+                // when used with non default currency code
+                $numDecimals = $this->countDecimalDigits($value, $symbols[self::SEPARATOR_SYMBOL]);
+
                 // Check if the number of decimal digits match the requirement
-                if ($this->getScaleCorrectness() && $numDecimals !== $numFractionDigits) {
+                if ($this->getScaleCorrectness() && $numDecimals !== $fractionDigits) {
                     return $unfilteredValue;
                 }
 
