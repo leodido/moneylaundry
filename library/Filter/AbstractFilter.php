@@ -93,8 +93,9 @@ abstract class AbstractFilter extends AbstractLocale
      */
     protected function setupCurrencyCode()
     {
+        $formatter = $this->getFormatter();
         $currencyCode = $this->getCurrencyCode();
-        $this->getFormatter()->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $currencyCode);
+        $formatter->setTextAttribute(\NumberFormatter::CURRENCY_CODE, $currencyCode);
         return $currencyCode;
     }
 
