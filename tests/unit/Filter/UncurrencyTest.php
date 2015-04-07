@@ -17,15 +17,6 @@ use Zend\Stdlib\StringUtils;
  */
 class UncurrencyTest extends AbstractTest
 {
-    public function setUp()
-    {
-        if (!extension_loaded('mbstring')) {
-            $this->markTestSkipped('The mbstring extension is not installed/enabled');
-        }
-
-        parent::setUp();
-    }
-
     public function testCtor()
     {
         // FIXME: assertions related to currency code
@@ -335,58 +326,58 @@ class UncurrencyTest extends AbstractTest
         $formatter = $filter->getFormatter();
 
         // Allowed
-        $this->assertEquals(123, $filter->filter($formatter->format(123))); // 1.234,61 €'
-        $this->assertEquals(1234.61, $filter->filter($formatter->format(1234.61))); // 1.234,61 €
-        $this->assertEquals(1234.61, $filter->filter('1.234,61€'));
-        $this->assertEquals(1234.61, $filter->filter('1.234,61'));
-        $this->assertEquals(1234.61, $filter->filter('1234,61'));
-        $this->assertEquals(1234.61, $filter->filter('1234,61 EURO'));
+        $this->assertSame((float) 123, $filter->filter($formatter->format((float)123))); // 1.234,61 €'
+        $this->assertSame(1234.61, $filter->filter($formatter->format(1234.61))); // 1.234,61 €
+        $this->assertSame(1234.61, $filter->filter('1.234,61€'));
+        $this->assertSame(1234.61, $filter->filter('1.234,61'));
+        $this->assertSame(1234.61, $filter->filter('1234,61'));
+        $this->assertSame(1234.61, $filter->filter('1234,61 EURO'));
         $this->assertEquals(1234.619, $filter->filter('1234,619'));
         $this->assertEquals(1234.619, $filter->filter('1234,619 €'));
-        $this->assertEquals(-0.01, $filter->filter('-0,01€'));
-        $this->assertEquals(-0.5, $filter->filter('-0,5€'));
+        $this->assertSame(-0.01, $filter->filter('-0,01€'));
+        $this->assertSame(-0.5, $filter->filter('-0,5€'));
 
         if (version_compare($GLOBALS['INTL_ICU_VERSION'], '4.8.1.1') > 0) {
-            $this->assertEquals(1234.61, $filter->filter('1234,61 EUR')); // Because of (3)
+            $this->assertSame(1234.61, $filter->filter('1234,61 EUR')); // Because of (3)
         }
 
         // Not allowed
-        $this->assertEquals('1234,61 EUROOO', $filter->filter('1234,61 EUROOO'));
-        $this->assertEquals('1E-2 €', $filter->filter('1E-2 €'));
+        $this->assertSame('1234,61 EUROOO', $filter->filter('1234,61 EUROOO'));
+        $this->assertSame('1E-2 €', $filter->filter('1E-2 €'));
 
         // (2) correct number of decimal places required/mandatory
         $filter->setScaleCorrectness(true);
 
         // No more allowed
-        $this->assertEquals('1.234,619 €', $filter->filter('1.234,619 €'));
-        $this->assertEquals('1.234,619', $filter->filter('1.234,619'));
-        $this->assertEquals('1.234,1 €', $filter->filter('1.234,1 €'));
+        $this->assertSame('1.234,619 €', $filter->filter('1.234,619 €'));
+        $this->assertSame('1.234,619', $filter->filter('1.234,619'));
+        $this->assertSame('1.234,1 €', $filter->filter('1.234,1 €'));
 
         // Allowed
-        $this->assertEquals(1234.10, $filter->filter('1.234,10 €'));
+        $this->assertSame(1234.10, $filter->filter('1.234,10 €'));
 
         // (3) currency symbol (and correct formatting) required
         $filter->setCurrencyObligatoriness(true);
 
         // No more allowed
-        $this->assertEquals('1234,61', $filter->filter('1234,61'));
-        $this->assertEquals('1234,61€', $filter->filter('1234,61€'));
+        $this->assertSame('1234,61', $filter->filter('1234,61'));
+        $this->assertSame('1234,61€', $filter->filter('1234,61€'));
 
         // Allowed
-        $this->assertEquals(1234.61, $filter->filter($formatter->format(1234.61))); // 1234,61 €
-        $this->assertEquals(-0.01, $filter->filter($formatter->format(-0.01))); // -0,01 €
+        $this->assertSame(1234.61, $filter->filter($formatter->format(1234.61))); // 1234,61 €
+        $this->assertSame(-0.01, $filter->filter($formatter->format(-0.01))); // -0,01 €
 
         // bengali - bangladesh, (2) correct number of decimal places not mandatory, (3) currency not mandatory
         $filter = new Uncurrency('bn_BD', null, false, false);
         $formatter = $filter->getFormatter();
 
         // Allowed
-        $this->assertEquals(0, $filter->filter($formatter->format(0))); // '০.০০৳' (w/ currency symbol)
-        $this->assertEquals(0, $filter->filter('০.০'));
-        $this->assertEquals(0.01, $filter->filter($formatter->format(0.01))); // '০.০১৳' (w/ currency simbol)
-        $this->assertEquals(0.01, $filter->filter('০.০১০'));
-        $this->assertEquals(0, $filter->filter('(০.০)'));
-        $this->assertEquals(-0.01, $filter->filter($formatter->format(-0.01))); // (০.০১৳) (w/ currency symbol)
-        $this->assertEquals(-0.01, $filter->filter('(০.০১)'));
+        $this->assertSame((float) 0, $filter->filter($formatter->format((float) 0))); // '০.০০৳' (w/ currency symbol)
+        $this->assertSame((float) 0, $filter->filter('০.০'));
+        $this->assertSame(0.01, $filter->filter($formatter->format(0.01))); // '০.০১৳' (w/ currency simbol)
+        $this->assertSame(0.01, $filter->filter('০.০১০'));
+        $this->assertSame((float) 0, $filter->filter('(০.০)'));
+        $this->assertSame(-0.01, $filter->filter($formatter->format(-0.01))); // (০.০১৳) (w/ currency symbol)
+        $this->assertSame(-0.01, $filter->filter('(০.০১)'));
     }
 }

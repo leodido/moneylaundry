@@ -39,30 +39,44 @@ class CurrencyTest extends AbstractTest
         $this->assertEquals('ru_RU', $filter->getLocale());
     }
 
-    public function testFilterWithDefaultCurrencyCode()
+
+    public function testFilterWithDefaults()
     {
         $filter = new Currency('it_IT');
 
         // Filter number represented in scientific notation
-        $this->assertInternalType('string', $filter->filter(1e-2));
-        $this->assertEquals('0,01 €', $filter->filter(1e-2));
-        $this->assertInternalType('string', $filter->filter(1e2));
-        $this->assertEquals('100,00 €', $filter->filter(1e2));
-        // Filter usual numbers
+        // FIXME: testing scientific notation in this way does not make sense:
+        //        the following values are litteral floats, they are not numeric string
+        //        repressented in scientifi notation
+//         $this->assertInternalType('string', $filter->filter(1e-2));
+//         $this->assertEquals('0,01 €', $filter->filter(1e-2));
+//         $this->assertInternalType('string', $filter->filter(1e2));
+//         $this->assertEquals('100,00 €', $filter->filter(1e2));
+
+        // Check currency symbol position (for oldier ICU versions)
+        $filter->filter(1.1); // Init formatter
+        $prefix = $filter->getFormatter()->getTextAttribute(\NumberFormatter::POSITIVE_PREFIX);
+        $suffix = $filter->getFormatter()->getTextAttribute(\NumberFormatter::POSITIVE_SUFFIX);
+
+
+        // Filter float numbers
         $this->assertInternalType('string', $filter->filter(0.01));
-        $this->assertEquals('0,01 €', $filter->filter(0.01));
-        $this->assertInternalType('string', $filter->filter(100));
-        $this->assertEquals('100,00 €', $filter->filter(100));
+        $this->assertEquals($prefix.'0,01'.$suffix, $filter->filter(0.01));
+        $this->assertInternalType('string', $filter->filter((float) 100));
+        $this->assertEquals($prefix.'100,00'.$suffix, $filter->filter((float) 100));
         $this->assertInternalType('string', $filter->filter(1234.61));
-        $this->assertEquals('1.234,61 €', $filter->filter(1234.61));
-        // NaN values
-        $this->assertInternalType('string', $filter->filter(NAN));
-        $this->assertEquals('NaN', $filter->filter(NAN));
-        $this->assertInternalType('string', $filter->filter(acos(1.01)));
-        $this->assertEquals('NaN', $filter->filter(acos(1.01)));
-        // Infinity values
-        $this->assertInternalType('string', $filter->filter(INF));
-        $this->assertEquals('∞ €', $filter->filter(INF));
+        $this->assertEquals($prefix.'1.234,61'.$suffix, $filter->filter(1234.61));
+
+        // Passthrough
+        $this->assertSame(100, $filter->filter(100)); // int test
+        $this->assertSame(INF, $filter->filter(INF));
+        $this->assertTrue(is_nan($filter->filter(NAN)));
+        $this->assertSame(null, $filter->filter(null));
+        $this->assertSame(true, $filter->filter(true));
+        $this->assertSame("", $filter->filter(""));
+        $this->assertSame([], $filter->filter([]));
+        $this->assertSame($filter, $filter->filter($filter)); // testing with an object
+
     }
 
     public function testFilterWithCustomCurrencyCode()
@@ -70,25 +84,31 @@ class CurrencyTest extends AbstractTest
         $filter = new Currency('it_IT');
         $filter->setCurrencyCode('GBP');
 
+        // Check currency symbol position (for oldier ICU versions)
+        $filter->filter(1.1); // Init formatter
+        $prefix = $filter->getFormatter()->getTextAttribute(\NumberFormatter::POSITIVE_PREFIX);
+        $suffix = $filter->getFormatter()->getTextAttribute(\NumberFormatter::POSITIVE_SUFFIX);
+
         // Filter usual numbers
         $this->assertInternalType('string', $filter->filter(1.10));
-        $this->assertEquals('1,10 £', $filter->filter(1.10));
+        $this->assertEquals($prefix.'1,10'.$suffix, $filter->filter(1.10));
         // Filter number represented in scientific notation
-        $this->assertInternalType('string', $filter->filter(1e-2));
-        $this->assertEquals('0,01 £', $filter->filter(1e-2));
+//         $this->assertInternalType('string', $filter->filter(1e-2));
+//         $this->assertEquals('0,01 £', $filter->filter(1e-2));
     }
 
     public function testFilterInfinityValues()
     {
         $filter = new Currency('it_IT', 'USD');
 
-        var_dump($filter->filter(INF));
+        $this->assertSame(INF, $filter->filter(INF));
+        $this->assertSame(-INF, $filter->filter(-INF));
     }
 
     public function testFilterNaNValues()
     {
         $filter = new Currency('ar_QA', 'EUR');
 
-        var_dump($filter->filter(NAN));
+        $this->assertTrue(is_nan($filter->filter(NAN)));
     }
 }
