@@ -142,6 +142,10 @@ class Uncurrency extends AbstractFilter
             if ($result !== false && ((is_float($result) && !is_infinite($result) && !is_nan($result)))) {
                 ErrorHandler::stop();
 
+                $rb = \ResourceBundle::create($this->getLocale(), 'ICUDATA-curr', true);
+                var_dump($rb->get('Currencies')->get($this->getCurrencyCode())->get(0));
+                var_dump($formatter->getSymbol(\NumberFormatter::CURRENCY_SYMBOL));
+
                 // Check if the parsing finished before the end of the input
                 if ($position !== grapheme_strlen($value)) {
                     return $unfilteredValue;
