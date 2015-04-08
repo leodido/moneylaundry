@@ -18,21 +18,22 @@ use Zend\Stdlib\ErrorHandler;
 class Currency extends AbstractFilter
 {
     /**
-     * Default options
-     *
-     * Meanings:
-     * - Key 'locale' contains the locale string (e.g., <language>[_<country>][.<charset>]) you desire
-     * - Key 'currency_code' contains an ISO 4217 currency code string
+     * Default option values
      *
      * @var array
      */
     protected $options = [
         'locale' => null,
-        'currency_code' => null
+        'currency_code' => null,
+        'scale_correctness' => self::DEFAULT_SCALE_CORRECTNESS
     ];
 
     /**
      * Ctor
+     *
+     * Available options are:
+     * - Key 'locale' contains the locale string (e.g., <language>[_<country>][.<charset>]) you desire
+     * - Key 'currency_code' contains an ISO 4217 currency code string
      *
      * @param array|\Traversable|string|null $localeOrOptions
      * @param string|null                    $currencyCode
@@ -62,25 +63,24 @@ class Currency extends AbstractFilter
     public function filter($value)
     {
         $unfilteredValue = $value;
-        if ((is_float($value) && !is_nan($value) && !is_infinite($value))) {
+        if (is_float($value) && !is_nan($value) && !is_infinite($value)) {
             ErrorHandler::start();
 
             $formatter = $this->getFormatter();
             $currencyCode = $this->setupCurrencyCode();
             $result = $formatter->formatCurrency($value, $currencyCode);
-            //$formatter->parse($result, \NumberFormatter::TYPE_DOUBLE) === $value;
+
             ErrorHandler::stop();
 
             if ($result === false) {
                 return $unfilteredValue;
             }
 
-
+            // Retrieve the precision internally used by the formatter (i.e., depends from locale and currency code)
             $precision = $formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS);
 
-            // in strict mode, $result should pass only if the currency's fraction digits
-            // can accomodate the $value decimal precision
-            // i.e. EUR (franction digits = 2) must NOT allow double(1.23432423432)
+            // $result is considered valid if the currency's fraction digits can accomodate the $value decimal precision
+            // i.e. EUR (fraction digits = 2) must NOT allow double(1.23432423432)
             if ($this->getScaleCorrectness() && !$this->hasFloatDecimalPrecision($value, $precision)) {
                 return $unfilteredValue;
             }

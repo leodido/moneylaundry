@@ -134,15 +134,13 @@ abstract class AbstractFilter extends AbstractLocale
      */
     public function getScaleCorrectness()
     {
-        if (!isset($this->options['scale_correctness'])) {
-            $this->options['scale_correctness'] = self::DEFAULT_SCALE_CORRECTNESS;
-        }
         return $this->options['scale_correctness'];
     }
 
 
     protected function hasFloatDecimalPrecision($floatValue, $precision, $roundingMode = PHP_ROUND_HALF_UP)
     {
+        // FIXME: retrieve rounding mode from formatter
         $testValue = round($floatValue, $precision, $roundingMode);
         return $floatValue === $testValue;
     }
