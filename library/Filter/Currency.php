@@ -13,8 +13,7 @@ use Zend\Stdlib\ErrorHandler;
 /**
  * Class Currency
  *
- * Given an integer and a locale it returns the corresponding well-formatted currency amount.
- * TODO: complete (dominio-codominio, NAN, INF, exponential notation)
+ * Given a locale and a currency code it formats float numbers to the corresponding well-formatted currency amount.
  */
 class Currency extends AbstractFilter
 {
@@ -23,7 +22,7 @@ class Currency extends AbstractFilter
      *
      * Meanings:
      * - Key 'locale' contains the locale string (e.g., <language>[_<country>][.<charset>]) you desire
-     * - Key 'currency_code' ... // TODO: doc
+     * - Key 'currency_code' contains an ISO 4217 currency code string
      *
      * @var array
      */
@@ -90,16 +89,5 @@ class Currency extends AbstractFilter
         }
 
         return $unfilteredValue;
-
-//
-//        // From string to number
-//        $formatter = new NumberFormat($this->getLocale(), \NumberFormatter::DECIMAL);
-//        $decimal = $formatter->filter($value);
-//        if ($decimal === $value) {
-//            return $value;
-//        }
-//        // From number to locale formatted string
-//        $formatter = new NumberFormat($this->getLocale(), \NumberFormatter::CURRENCY);
-//        return $formatter->filter($decimal);
     }
 }
