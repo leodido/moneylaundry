@@ -117,13 +117,16 @@ class DomainTest extends AbstractTest
     public function getStrictCodomainDataProvider()
     {
         return [
-            //locale, currency code, value, is a valid domain value?
+            // locale, currency code, value, is a valid domain value?
             ['en_GB', 'GBP', '£11.33', true],
             ['en_GB', 'GBP', '£11.00', true],
+            ['it_IT', 'EUR', "11,33 €", true],
             ['en_GB', 'GBP', '£1E3', false],
             ['en_GB', 'GBP', '£11', false], // GBP has only 2 fraction digits
             ['en_GB', 'GBP', '£11.333', false], // GBP has only 2 fraction digits
-
+            ['it_IT', 'EUR', "€ 11,33", false], // Wrong currency position
+            ['en_GB', 'GBP', 'GBP11.33', false],
+            ['it_IT', 'EUR', "11,33 EUR", false],
         ];
     }
 
@@ -214,9 +217,11 @@ class DomainTest extends AbstractTest
 
         $domainValue = $uncurrency->filter($value);
         $codomainValue = $currency->filter($domainValue);
-//         var_dump($value);
-//         var_dump($domainValue);
-//         var_dump($codomainValue);
+        echo PHP_EOL;
+        var_dump($value);
+        var_dump($domainValue);
+        var_dump($codomainValue);
+        echo PHP_EOL;
 
 
         $this->assertSameOrNaN($value, $codomainValue);
