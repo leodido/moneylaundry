@@ -121,7 +121,7 @@ class DomainTest extends AbstractTest
             ['en_GB', 'GBP', '£11.33', true],
             ['en_GB', 'GBP', '£11.00', true],
             ['en_GB', 'GBP', '£1E3', false],
-//             ['en_GB', 'GBP', '£11', false], // GBP has only 2 fraction digits
+            ['en_GB', 'GBP', '£11', false], // GBP has only 2 fraction digits
             ['en_GB', 'GBP', '£11.333', false], // GBP has only 2 fraction digits
 
         ];

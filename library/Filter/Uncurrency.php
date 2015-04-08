@@ -177,17 +177,20 @@ class Uncurrency extends AbstractFilter
                 }
 
 
-                $checkPrecision = $this->hasFloatDecimalPrecision($result, $fractionDigits);
 
-                /*
-                // FIXME: currenty, it doesn't work because parse and parseCurrancy could use different symbols
                 // Check if the number of decimal digits match the requirement (unless the result is not finite)
-                if ($this->getScaleCorrectness() && ($numDecimals !== $numFractionDigits && is_finite($result))) {
-                    return $unfilteredValue;
-                }
-                */
+                if ($this->getScaleCorrectness()) {
+                    $countedDecimals = $this->countDecimalDigits(
+                        $value, $formatter->getSymbol(\NumberFormatter::DECIMAL_SEPARATOR_SYMBOL)
+                    );
 
-                return $checkPrecision ? $result : $unfilteredValue;
+                    if ($fractionDigits !== $countedDecimals) {
+                        return $unfilteredValue;
+                    }
+
+                }
+
+                return $result;
             }
 
             // Retrieve symbols
@@ -407,8 +410,10 @@ class Uncurrency extends AbstractFilter
      */
     protected function countDecimalDigits($number, $separatorSymbol)
     {
-        // FIXME: double check decimal extraction logic
         $lastOccurence = grapheme_strrpos($number, $separatorSymbol);
+        if ($lastOccurence === false) {
+            return 0;
+        }
         $decimals = grapheme_substr($number, $lastOccurence + 1);
         return preg_match_all(
             sprintf(
