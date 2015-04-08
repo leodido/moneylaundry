@@ -8,8 +8,8 @@
  */
 namespace MoneyLaundry\Filter;
 
-use Zend\I18n\Filter\AbstractLocale;
 use Zend\I18n\Exception;
+use Zend\I18n\Filter\AbstractLocale;
 
 /**
  * Class AbstractFilter
@@ -17,6 +17,7 @@ use Zend\I18n\Exception;
 abstract class AbstractFilter extends AbstractLocale
 {
     const DEFAULT_SCALE_CORRECTNESS = true;
+    const DEFAULT_CURRENCY_CORRECTNESS = true;
 
     /**
      * @var \NumberFormatter
@@ -135,6 +136,28 @@ abstract class AbstractFilter extends AbstractLocale
     public function getScaleCorrectness()
     {
         return $this->options['scale_correctness'];
+    }
+
+    /**
+     * Set whether the currency presence and correctness is mandatory or not
+     *
+     * @param $currencySymbolMandatory
+     * @return $this
+     */
+    public function setCurrencyCorrectness($currencySymbolMandatory)
+    {
+        $this->options['currency_correctness'] = (bool) $currencySymbolMandatory;
+        return $this;
+    }
+
+    /**
+     * Is the currency presence and correctness mandatory?
+     *
+     * @return bool
+     */
+    public function getCurrencyCorrectness()
+    {
+        return $this->options['currency_correctness'];
     }
 
 

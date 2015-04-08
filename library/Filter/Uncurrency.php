@@ -25,8 +25,6 @@ use Zend\Stdlib\StringUtils;
  */
 class Uncurrency extends AbstractFilter
 {
-    const DEFAULT_CURRENCY_OBLIGATORINESS = true;
-
     const REGEX_NUMBERS = 0;
     const REGEX_FLAGS = 1;
 
@@ -45,13 +43,7 @@ class Uncurrency extends AbstractFilter
      * Default options
      *
      * Meanings:
-     * - Key 'locale' contains the locale string (e.g., <language>[_<country>][.<charset>]) you desire
-     * - Key 'currency_code' contains an ISO 4217 currency code string
-     * - Key 'scale_correctness' contains a boolean value indicating
-     *   if the scale (i.e., the number of digits to the right of the decimal point in a number) have to match
-     *   the scale specified by the pattern of the current locale
-     * - Key 'currency_obligatoriness' contains a boolean value indicating
-     *   if the presence of the currency is mandatory or not
+
      *
      * @var array
      */
@@ -59,7 +51,7 @@ class Uncurrency extends AbstractFilter
         'locale' => null,
         'currency_code' => null,
         'scale_correctness' => self::DEFAULT_SCALE_CORRECTNESS,
-        'currency_obligatoriness' => self::DEFAULT_CURRENCY_OBLIGATORINESS
+        'currency_correctness' => self::DEFAULT_CURRENCY_CORRECTNESS
     ];
 
     /**
@@ -75,16 +67,21 @@ class Uncurrency extends AbstractFilter
     /**
      * Ctor
      *
+     * Available options are:
+     * - Key 'locale' contains the locale string (e.g., <language>[_<country>][.<charset>]) you desire
+     * - Key 'currency_code' contains an ISO 4217 currency code string
+     * - Key 'scale_correctness' contains a boolean value indicating
+     *   if the scale (i.e., the number of digits to the right of the decimal point in a number) have to match
+     *   the scale specified by the pattern of the current locale
+     * - Key 'currency_correctness' contains a boolean value indicating
+     *   if the presence and the correctness of the currency is mandatory or not
+     *
      * @param array|\Traversable|string|null    $localeOrOptions
      * @param string|null                       $currencyCode
-     * @param bool                              $scaleCorrectness
-     * @param bool                              $currencyObligatoriness
      */
     public function __construct(
         $localeOrOptions = null,
-        $currencyCode = null,
-        $scaleCorrectness = self::DEFAULT_SCALE_CORRECTNESS,
-        $currencyObligatoriness = self::DEFAULT_CURRENCY_OBLIGATORINESS
+        $currencyCode = null
     ) {
         parent::__construct();
         if ($localeOrOptions !== null) {
@@ -93,33 +90,8 @@ class Uncurrency extends AbstractFilter
             } else {
                 $this->setLocale($localeOrOptions);
                 $this->setCurrencyCode($currencyCode);
-                $this->setScaleCorrectness($scaleCorrectness);
-                $this->setCurrencyObligatoriness($currencyObligatoriness);
             }
         }
-    }
-
-
-    /**
-     * Set whether the currency symbol is mandatory or not
-     *
-     * @param $currencySymbolMandatory
-     * @return $this
-     */
-    public function setCurrencyObligatoriness($currencySymbolMandatory)
-    {
-        $this->options['currency_obligatoriness'] = (bool) $currencySymbolMandatory;
-        return $this;
-    }
-
-    /**
-     * Is the currency symbol mandatory?
-     *
-     * @return bool
-     */
-    public function getCurrencyObligatoriness()
-    {
-        return $this->options['currency_obligatoriness'];
     }
 
     /**
@@ -202,7 +174,7 @@ class Uncurrency extends AbstractFilter
             // At this stage result is FALSE and input probably is not a well-formatted currency
 
             // Check if the currency symbol is mandatory (assiming 'parse MODE')
-            if ($this->getCurrencyObligatoriness()) {
+            if ($this->getCurrencyCorrectness()) {
                 ErrorHandler::stop();
                 return $unfilteredValue;
             }
