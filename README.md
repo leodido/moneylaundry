@@ -3,9 +3,9 @@ MoneyLaundry
 
 [![Latest Stable Version](http://img.shields.io/packagist/v/leodido/moneylaundry.svg?style=flat-square)](https://packagist.org/packages/leodido/moneylaundry)
 
-Collection of utilities to filter and validate money with **I18n** in mind.
+Collection of utilities to filter and validate money with **i18n** in mind.
 
-This library includes (will include) a series of classes aimed at **filtering**, **validating**, **formatting**, and **cleaning up** of monetary and currency values.
+This library includes a series of classes aimed at **filtering**, **validating**, **formatting**, and **cleaning up** of monetary and currency values.
 
 ![breaking bad laundry](bb.jpg)
 
@@ -45,7 +45,7 @@ Add `leodido/moneylaundry` to your `composer.json`.
 ```json
 {
    "require": {
-       "leodido/moneylaundry": "v0.1.0"
+       "leodido/moneylaundry": "v0.2.0"
    }
 }
 ```

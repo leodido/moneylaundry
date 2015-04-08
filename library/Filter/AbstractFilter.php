@@ -160,10 +160,16 @@ abstract class AbstractFilter extends AbstractLocale
         return $this->options['currency_correctness'];
     }
 
-
-    protected function hasFloatDecimalPrecision($floatValue, $precision, $roundingMode = PHP_ROUND_HALF_UP)
+    /**
+     * Check wether the scale of the given float accomodates the given precision.
+     *
+     * @param float     $floatValue     The float which scale is to be checked
+     * @param int       $precision      The number of decimal digits to round to
+     * @param int       $roundingMode   How to round the float
+     * @return bool     The check result
+     */
+    protected function isFloatScalePrecise($floatValue, $precision, $roundingMode = PHP_ROUND_HALF_UP)
     {
-        // FIXME: retrieve rounding mode from formatter
         $testValue = round($floatValue, $precision, $roundingMode);
         return $floatValue === $testValue;
     }

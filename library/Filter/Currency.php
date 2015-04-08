@@ -84,7 +84,12 @@ class Currency extends AbstractFilter
 
             // $result is considered valid if the currency's fraction digits can accomodate the $value decimal precision
             // i.e. EUR (fraction digits = 2) must NOT allow double(1.23432423432)
-            if ($this->getScaleCorrectness() && !$this->hasFloatDecimalPrecision($value, $precision)) {
+            $isFloatScalePrecise = $this->isFloatScalePrecise(
+                $value,
+                $precision,
+                $this->formatter->getAttribute(\NumberFormatter::ROUNDING_MODE)
+            );
+            if ($this->getScaleCorrectness() && !$isFloatScalePrecise) {
                 return $unfilteredValue;
             }
 
