@@ -14,6 +14,9 @@ use Zend\Stdlib\ErrorHandler;
  * Class Currency
  *
  * Given a locale and a currency code it formats float numbers to the corresponding well-formatted currency amount.
+ * The filtering process in the default mode accepts only
+ * floats which number of decimals accomodates the locale and currency number of fraction digits.
+ * This behaviour can be disabled setting the scale correctness option to false.
  */
 class Currency extends AbstractFilter
 {

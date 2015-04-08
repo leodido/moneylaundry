@@ -113,7 +113,7 @@ class Uncurrency extends AbstractFilter
             $unfilteredValue = $value;
 
             // Replace spaces with NBSP (non breaking spaces)
-            $value = str_replace("\x20", "\xC2\xA0", $value);
+            $value = str_replace("\x20", "\xC2\xA0", $value); // FIXME: can be removed?
 
 
             // Parse as currency
@@ -142,15 +142,12 @@ class Uncurrency extends AbstractFilter
             if ($result !== false && ((is_float($result) && !is_infinite($result) && !is_nan($result)))) {
                 ErrorHandler::stop();
 
-
                 // Check if the parsing finished before the end of the input
                 if ($position !== grapheme_strlen($value)) {
                     return $unfilteredValue;
                 }
 
-
-
-                // Check if the number of decimal digits match the requirement (unless the result is not finite)
+                // Check if the num. of decimal digits match the requirement (unless the result is not finite or is nan)
                 if ($this->getScaleCorrectness()) {
                     $countedDecimals = $this->countDecimalDigits(
                         $value,
