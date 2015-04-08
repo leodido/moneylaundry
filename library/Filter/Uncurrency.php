@@ -181,7 +181,8 @@ class Uncurrency extends AbstractFilter
                 // Check if the number of decimal digits match the requirement (unless the result is not finite)
                 if ($this->getScaleCorrectness()) {
                     $countedDecimals = $this->countDecimalDigits(
-                        $value, $formatter->getSymbol(\NumberFormatter::DECIMAL_SEPARATOR_SYMBOL)
+                        $value,
+                        $formatter->getSymbol(\NumberFormatter::MONETARY_SEPARATOR_SYMBOL)
                     );
 
                     if ($fractionDigits !== $countedDecimals) {
