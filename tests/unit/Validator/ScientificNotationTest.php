@@ -17,9 +17,6 @@ class ScientificNotationTest extends \PHPUnit_Framework_TestCase
         if (!extension_loaded('intl')) {
             $this->markTestSkipped('The intl extension is not installed/enabled');
         }
-        if (!extension_loaded('mbstring')) {
-            $this->markTestSkipped('The mbstring extension is not installed/enabled');
-        }
         //
         $this->defaultLocale = ini_get('intl.default_locale');
         ini_set('intl.default_locale', 'en_US');

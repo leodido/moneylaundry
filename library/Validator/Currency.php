@@ -45,6 +45,7 @@ class Currency extends AbstractValidator
         'format' => 'pattern'
     ];
 
+
     /**
      * Fraction digit obligatoriness option
      * @var bool
@@ -99,6 +100,30 @@ class Currency extends AbstractValidator
     public function isCurrencySymbolMandatory()
     {
         return $this->currencySymbolMandatory;
+    }
+
+    protected $currencyCode;
+
+    /**
+     * Set the currency code
+     *
+     * @param   string|null $currencyCode
+     * @return  $this
+     */
+    public function setCurrencyCode($currencyCode = null)
+    {
+        $this->currencyCode = $currencyCode;
+        return $this;
+    }
+
+    /**
+     * Retrieve the currency code
+     *
+     * @return string|null
+     */
+    public function getCurrencyCode()
+    {
+        return $this->currencyCode;
     }
 
     /**
@@ -177,12 +202,6 @@ class Currency extends AbstractValidator
                 __NAMESPACE__
             ));
         }
-        if (!extension_loaded('mbstring')) {
-            throw new I18nException\ExtensionNotLoadedException(sprintf(
-                '%s component requires the mbstring PHP extension',
-                __NAMESPACE__
-            ));
-        }
         // @codeCoverageIgnoreEnd
         // Set options
         parent::__construct($options);
@@ -232,10 +251,12 @@ class Currency extends AbstractValidator
 
         $filter = new Uncurrency(
             $this->getLocale(),
+            $this->getCurrencyCode(),
             $this->isFractionDigitsMandatory(),
             $this->isCurrencySymbolMandatory()
         );
         $result = $filter->filter($this->getValue());
+        $this->currencyCode = $filter->getCurrencyCode();
         if ($result !== $this->getValue()) {
             // Filter succedeed
             if (!$this->isNegativeAllowed() && $result < 0) {

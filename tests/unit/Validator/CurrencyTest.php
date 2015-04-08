@@ -26,9 +26,6 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
         if (!extension_loaded('intl')) {
             $this->markTestSkipped('The intl extension is not installed/enabled');
         }
-        if (!extension_loaded('mbstring')) {
-            $this->markTestSkipped('The mbstring extension is not installed/enabled');
-        }
         //
         $this->defaultLocale = ini_get('intl.default_locale');
         ini_set('intl.default_locale', 'en_US');
@@ -66,6 +63,7 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
         // Testing options
         $validator = new CurrencyValidator([
             'locale' => 'it_IT',
+            'currency_code' => 'EUR',
             'fraction_digits_mandatory' => false,
             'currency_symbol_mandatory' => false,
             'negative_allowed' => false
@@ -77,6 +75,7 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
         // Testing traversable
         $traversableOpts = new ArrayObject([
                 'locale' => 'it_IT',
+                'currency_code' => 'EUR',
                 'fraction_digits_mandatory' => true,
                 'currency_symbol_mandatory' => false,
                 'negative_allowed' => true
@@ -124,10 +123,11 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
      * @param $options
      * @dataProvider validationProvider
      */
-    public function testValidation($value, $expected, $locale, array $options)
+    public function testValidation($value, $expected, $locale, $currencyCode, array $options)
     {
         $v = new CurrencyValidator();
         $v->setLocale($locale);
+        $v->setCurrencyCode($currencyCode);
         $v->setOptions($options);
         $this->assertEquals(
             $expected,
@@ -152,43 +152,43 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
         //
         $data = [
             // not string input
-            [123, false, 'it_IT', $opts['000']],
+            [123, false, 'it_IT', 'EUR', $opts['000']],
             // exact number of fraction digits required but not provided
-            ['1.234,619', false, 'it_IT', $opts['100']],
-            ['1.234,619', false, 'it_IT', $opts['101']],
-            ['1.234,619 €', false, 'it_IT', $opts['111']],
-            ['1.234,619 €', false, 'it_IT', $opts['110']],
+            ['1.234,619', false, 'it_IT', 'EUR', $opts['100']],
+            ['1.234,619', false, 'it_IT', 'EUR', $opts['101']],
+            ['1.234,619 €', false, 'it_IT', 'EUR', $opts['111']],
+            ['1.234,619 €', false, 'it_IT', 'EUR', $opts['110']],
             // currency symbol required but not provided
-            ['1.234,61', false, 'it_IT', $opts['111']],
-            ['1.234,61', false, 'it_IT', $opts['110']],
-            ['1.234,61', false, 'it_IT', $opts['010']],
-            ['1.234,61', false, 'it_IT', $opts['011']],
+            ['1.234,61', false, 'it_IT', 'EUR', $opts['111']],
+            ['1.234,61', false, 'it_IT', 'EUR', $opts['110']],
+            ['1.234,61', false, 'it_IT', 'EUR', $opts['010']],
+            ['1.234,61', false, 'it_IT', 'EUR', $opts['011']],
             // negative currency amount NOT allowed but provided
-            ['-1.234,61', false, 'it_IT', $opts['000']],
-            ['-1.234,61 €', false, 'it_IT', $opts['010']],
-            ['-1.234,61 €', false, 'it_IT', $opts['110']],
-            ['-1.234,61', false, 'it_IT', $opts['100']],
+            ['-1.234,61', false, 'it_IT', 'EUR', $opts['000']],
+            ['-1.234,61 €', false, 'it_IT', 'EUR', $opts['010']],
+            ['-1.234,61 €', false, 'it_IT', 'EUR', $opts['110']],
+            ['-1.234,61', false, 'it_IT', 'EUR', $opts['100']],
             // exact number of fraction digits NOT required
-            ['1.234,619', true, 'it_IT', $opts['000']],
-            ['1.234,619', true, 'it_IT', $opts['001']],
-            ['1.234,619 €', true, 'it_IT', $opts['011']],
-            ['1.234,619 €', true, 'it_IT', $opts['010']],
+            ['1.234,619', true, 'it_IT', 'EUR', $opts['000']],
+            ['1.234,619', true, 'it_IT', 'EUR', $opts['001']],
+            ['1.234,619 €', true, 'it_IT', 'EUR', $opts['011']],
+            ['1.234,619 €', true, 'it_IT', 'EUR', $opts['010']],
             // currency symbol NOT required
-            ['1.234,61', true, 'it_IT', $opts['101']],
-            ['1.234,61', true, 'it_IT', $opts['100']],
-            ['1.234,61', true, 'it_IT', $opts['000']],
-            ['1.234,61', true, 'it_IT', $opts['001']],
+            ['1.234,61', true, 'it_IT', 'EUR', $opts['101']],
+            ['1.234,61', true, 'it_IT', 'EUR', $opts['100']],
+            ['1.234,61', true, 'it_IT', 'EUR', $opts['000']],
+            ['1.234,61', true, 'it_IT', 'EUR', $opts['001']],
             // negative currency amount allowed
-            ['-1.234,61', true, 'it_IT', $opts['001']],
-            ['-1.234,61 €', true, 'it_IT', $opts['011']],
-            ['-1.234,61 €', true, 'it_IT', $opts['111']],
-            ['-1.234,61', true, 'it_IT', $opts['101']],
+            ['-1.234,61', true, 'it_IT', 'EUR', $opts['001']],
+            ['-1.234,61 €', true, 'it_IT', 'EUR', $opts['011']],
+            ['-1.234,61 €', true, 'it_IT', 'EUR', $opts['111']],
+            ['-1.234,61', true, 'it_IT', 'EUR', $opts['101']],
             // strict validation
-            ['1.234,61 €', true, 'it_IT', $opts['110']],
-            ['1.234,61 EUR', true, 'it_IT', $opts['110']],
-            ['1.234 €', false, 'it_IT', $opts['110']], // because there isn't digital places
-            ['-1.234.10 €', false, 'it_IT', $opts['110']], // because negative amount
-            ['1.234,61', false, 'it_IT', $opts['110']], // because no currency symbol
+            ['1.234,61 €', true, 'it_IT', 'EUR', $opts['110']],
+            ['1.234,61 EUR', true, 'it_IT', 'EUR', $opts['110']],
+            ['1.234 €', false, 'it_IT', 'EUR', $opts['110']], // because there isn't digital places
+            ['-1.234.10 €', false, 'it_IT', 'EUR', $opts['110']], // because negative amount
+            ['1.234,61', false, 'it_IT', 'EUR', $opts['110']], // because no currency symbol
         ];
 
         return $data;
