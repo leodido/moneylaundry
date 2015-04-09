@@ -32,14 +32,14 @@ class Combin
             return $combinations;
         }
         // initialise array to put new values in
-        $new_combinations = [];
+        $newCombinations = [];
         // loop through existing combinations and character set to create strings
         foreach ($combinations as $combination) {
             foreach ($chars as $char) {
-                $new_combinations[] = $combination . $char;
+                $newCombinations[] = $combination . $char;
             }
         }
         // call same function again for the next iteration
-        return self::combn($chars, $n - 1, $new_combinations);
+        return self::combn($chars, $n - 1, $newCombinations);
     }
 }

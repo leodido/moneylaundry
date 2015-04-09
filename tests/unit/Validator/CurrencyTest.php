@@ -90,12 +90,18 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
 
     public function testCurrencyCodeOption()
     {
-        $v = new CurrencyValidator('it_IT');
+        $v = new CurrencyValidator(['locale' => 'it_IT']);
         $this->assertNull($v->getCurrencyCode());
         $v->isValid('1.234,61 €');
-        var_dump($v->getCurrencyCode());
+        $formatter = \NumberFormatter::create('it_IT', \NumberFormatter::CURRENCY);
+        $this->assertEquals(
+            $v->getCurrencyCode(),
+            $formatter->getTextAttribute(\NumberFormatter::CURRENCY_CODE)
+        );
 
-        // FIXME: setCurrencyCode
+        $v = new CurrencyValidator(['locale' => 'it_IT']);
+        $v->setCurrencyCode('USD');
+        $this->assertEquals('USD', $v->getCurrencyCode());
     }
 
     public function testLocaleOption()
@@ -130,6 +136,7 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
      * @param $value
      * @param $expected
      * @param $locale
+     * @param $currencyCode
      * @param $options
      * @dataProvider validationProvider
      */
@@ -173,6 +180,7 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
             ['1.234,61', false, 'it_IT', 'EUR', $opts['110']],
             ['1.234,61', false, 'it_IT', 'EUR', $opts['010']],
             ['1.234,61', false, 'it_IT', 'EUR', $opts['011']],
+            ['1.234,61 EUR', false, 'it_IT', 'EUR', $opts['110']],
             // negative currency amount NOT allowed but provided
             ['-1.234,61', false, 'it_IT', 'EUR', $opts['000']],
             ['-1.234,61 €', false, 'it_IT', 'EUR', $opts['010']],
@@ -188,6 +196,7 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
             ['1.234,61', true, 'it_IT', 'EUR', $opts['100']],
             ['1.234,61', true, 'it_IT', 'EUR', $opts['000']],
             ['1.234,61', true, 'it_IT', 'EUR', $opts['001']],
+            ['1.234,61 EUR', true, 'it_IT', 'EUR', $opts['001']],
             // negative currency amount allowed
             ['-1.234,61', true, 'it_IT', 'EUR', $opts['001']],
             ['-1.234,61 €', true, 'it_IT', 'EUR', $opts['011']],
@@ -195,7 +204,6 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
             ['-1.234,61', true, 'it_IT', 'EUR', $opts['101']],
             // strict validation
             ['1.234,61 €', true, 'it_IT', 'EUR', $opts['110']],
-            ['1.234,61 EUR', true, 'it_IT', 'EUR', $opts['110']],
             ['1.234 €', false, 'it_IT', 'EUR', $opts['110']], // because there isn't digital places
             ['-1.234.10 €', false, 'it_IT', 'EUR', $opts['110']], // because negative amount
             ['1.234,61', false, 'it_IT', 'EUR', $opts['110']], // because no currency symbol
@@ -213,7 +221,7 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
         $opts = [];
         foreach ($combs as $values) {
             $opts[$values] = array_combine(
-                ['fraction_digits_mandatory', 'currency_symbol_mandatory', 'negative_allowed'],
+                ['scale_correctness', 'currency_correctness', 'negative_allowed'],
                 array_map(
                     function ($x) {
                         return (bool)$x;

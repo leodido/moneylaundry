@@ -2,7 +2,7 @@
 namespace MoneyLaundry\Validator;
 
 use Zend\I18n\Exception as I18nException;
-use Zend\I18n\Validator\Float;
+use Zend\I18n\Validator\IsFloat;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\StringUtils;
 use Zend\Validator\AbstractValidator;
@@ -113,7 +113,7 @@ class ScientificNotation extends AbstractValidator
         }
 
         // Check that the number expressed in scientific notation is a valid number
-        $float = new Float(['locale' => $this->getLocale()]);
+        $float = new IsFloat(['locale' => $this->getLocale()]);
         if (!$float->isValid($value)) {
             $this->error(self::NOT_NUMBER);
             return false;
