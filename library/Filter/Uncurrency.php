@@ -421,7 +421,8 @@ class Uncurrency extends AbstractFilter
             }
 
             if ($locale == 'root') {
-                var_dump('curreny symbol not found for ' . $originalLocale . ' ' . $currencyCode);
+                $currencySymbol = $currencyCode; // symbol not found
+//                 var_dump('curreny symbol not found for ' . $originalLocale . ' ' . $currencyCode);
                 break;
             }
 

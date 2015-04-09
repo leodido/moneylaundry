@@ -18,37 +18,129 @@ use MoneyLaundry\Filter\Uncurrency;
 class DomainTest extends AbstractTest
 {
 
+//     public function getStrictDomainDataProvider()
+//     {
+
+//         ini_set('memory_limit', '6G');
+
+//         $data = [
+
+//             // SPECIAL CASEs
+//             //locale, currency code, value, is a valid domain value?
+//         ];
+
+
+//         // valid values for all currencies
+//         $validDomainValues = [
+//            (float) -10,
+//            (float) 0,
+//            (float) 10,
+//         ];
+
+//         // invalid values for all currencies
+//         $invalidDomainValues = [
+//             -1, // int not allowed
+//             0, // int not allowed
+//             1, // int not allowed
+//             null,
+//             false,
+//             true,
+//             "",
+//             "123",
+//             "foo",
+//             [],
+//             ['foo' => 'bar'],
+//             new \stdClass,
+//             NAN,
+//             INF,
+//             -INF,
+//         ];
+
+//         // All available locales
+//         $locales = \ResourceBundle::getLocales('');
+
+//         // All available currencies
+//         $currencies = [];
+//         $currencyResources = \ResourceBundle::create('root', 'ICUDATA-curr', true);
+//         $currencySymbols = $currencyResources->get('Currencies');
+//         var_dump($currencySymbols->count());
+//         foreach ($currencySymbols as $currencyCode => $bundle) {
+//             $currencies[] = $currencyCode;
+//         }
+
+//         var_dump($currencies);
+
+//         foreach ($locales as $locale) {
+//             foreach ($currencies as $currencyCode) {
+//                 $tmpValid   = $validDomainValues;
+//                 $tmpInvalid = $invalidDomainValues;
+
+//                 // Build fraction digits test data
+//                 $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+//                 $formatter->setTextAttribute($formatter::CURRENCY_CODE, $currencyCode);
+//                 $fractionDigits = $formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS);
+//                 $tmpValid[]   = (float) (1 + pow(10, $fractionDigits));
+//                 $tmpInvalid[] = (float) (1 + pow(10, $fractionDigits - 1));
+//                 $tmpInvalid[] = (float) (1 + pow(10, $fractionDigits + 1));
+
+
+//                 foreach ($tmpValid as $value) {
+//                     $data[] = [$locale, $currencyCode, $value, true];
+//                 }
+
+//                 foreach ($tmpInvalid as $value) {
+//                     $data[] = [$locale, $currencyCode, $value, false];
+//                 }
+//             }
+//         }
+
+
+//         return $data;
+//     }
+
+
     public function getStrictDomainDataProvider()
+    {
+
+        ini_set('memory_limit', '6G');
+
+
+
+        // All available locales
+        $locales = \ResourceBundle::getLocales('');
+
+        // All available currencies
+        $currencies = [];
+        $currencyResources = \ResourceBundle::create('en', 'ICUDATA-curr', true);
+        $currencySymbols = $currencyResources->get('Currencies');
+        var_dump($currencySymbols->count());
+        foreach ($currencySymbols as $currencyCode => $bundle) {
+            $currencies[] = $currencyCode;
+        }
+
+        $data = [];
+
+        foreach ($locales as $locale) {
+            foreach ($currencies as $currencyCode) {
+                $data[] = [$locale, $currencyCode];
+            }
+        }
+
+        return $data;
+    }
+
+
+
+    protected function explodeTestData($locale, $currencyCode)
     {
         // valid values for all currencies
         $validDomainValues = [
-           (float) -10,
-           (float) 0,
-           (float) 10,
+            (float) -10,
+            (float) 0,
+            (float) 10,
         ];
 
-        $validDomainValuesByCurrencyCode = [
-            'EUR' => [
-                -4.5,
-                2.3,
-                22.11,
-            ],
-            'GBP' => [
-                -4.5,
-                2.3,
-                22.11,
-            ],
-            'VND' => [
-            ]
-        ];
-
-        array_walk(
-            $validDomainValuesByCurrencyCode,
-            function (&$array) use ($validDomainValues) {
-                $array = array_merge($array, $validDomainValues);
-            }
-        );
-
+        // invalid values for all currencies
         $invalidDomainValues = [
             -1, // int not allowed
             0, // int not allowed
@@ -67,55 +159,33 @@ class DomainTest extends AbstractTest
             -INF,
         ];
 
-        $invalidDomainValuesByCurrencyCode = [
-            'EUR' => [
-                0.123456789123456789 // EUR has only 2 fraction digits
-            ],
-            'GBP' => [
-                0.123456789123456789 // GBP has only 2 fraction digits
-            ],
-            'VND' => [
-                0.123456789123456789, // VND has only 2 fraction digits
-                0.5 // VND has only 0 fraction digits
-            ]
-        ];
+        $tmpValid   = $validDomainValues;
+        $tmpInvalid = $invalidDomainValues;
 
+        // Build fraction digits test data
+        $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+        $formatter->setTextAttribute($formatter::CURRENCY_CODE, $currencyCode);
+        $fractionDigits = $formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS);
+        $tmpValid[]   = (float) (1 + pow(10, -$fractionDigits));
+        $tmpValid[] = (float) (1 + pow(10, -($fractionDigits - 1)));
+        $tmpInvalid[] = (float) (1 + pow(10, -($fractionDigits + 1)));
 
-        array_walk(
-            $invalidDomainValuesByCurrencyCode,
-            function (&$array) use ($invalidDomainValues) {
-                $array = array_merge($array, $invalidDomainValues);
-            }
-        );
+        $return = [];
 
-        // All available locales
-        $locales = \ResourceBundle::getLocales('');
-
-        $data = [
-
-            // SPECIAL CASEs
-            //locale, currency code, value, is a valid domain value?
-        ];
-
-        foreach ($locales as $locale) {
-            foreach ($validDomainValuesByCurrencyCode as $currencyCode => $values) {
-                foreach ($values as $value) {
-                    $data[] = [$locale, $currencyCode, $value, true];
-                }
-            }
-            foreach ($invalidDomainValuesByCurrencyCode as $currencyCode => $values) {
-                foreach ($values as $value) {
-                    $data[] = [$locale, $currencyCode, $value, false];
-                }
-            }
+        foreach ($tmpValid as $value) {
+            $return[] = [$value, true];
         }
 
+        foreach ($tmpInvalid as $value) {
+            $return[] = [$value, false];
+        }
 
-        return $data;
+        return $return;
     }
 
     public function getStrictCodomainDataProvider()
     {
+        ini_set('memory_limit', '1G');
         return [
             // locale, currency code, value, is a valid domain value?
             ['en_GB', 'GBP', '£11.33', true],
@@ -176,28 +246,40 @@ class DomainTest extends AbstractTest
     /**
      * @param string $locale
      * @param string $currencyCode
-     * @param string $value
-     * @param bool $isValid
      *
      * @dataProvider getStrictDomainDataProvider
      */
-    public function testStrictDomain($locale, $currencyCode, $value, $isValid = true)
+    public function testStrictDomain($locale, $currencyCode)
     {
-        ini_set('memory_limit', '1G');
         $currency = new Currency($locale, $currencyCode);
         $uncurrency = new Uncurrency($locale, $currencyCode);
 
-        $codomainValue = $currency->filter($value);
-        $domainValue = $uncurrency->filter($codomainValue);
+        $data = $this->explodeTestData($locale, $currencyCode);
 
-        $this->assertSameOrNaN($value, $domainValue);
+        foreach ($data as $testValues) {
 
-        if ($isValid) {
-            $this->assertNotSameNorNaN($value, $codomainValue);
-            $this->assertInCodomain($locale, $currencyCode, $codomainValue);
-            $this->assertInDomain($locale, $currencyCode, $domainValue);
-        } else {
-            $this->assertSameOrNaN($value, $codomainValue);
+            list($value, $isValid) = $testValues;
+
+//             echo '--------------'. PHP_EOL;
+//                 var_dump($testValues);
+//                 var_dump($value);
+//                 var_dump($isValid);
+
+
+            $codomainValue = $currency->filter($value);
+            $domainValue = $uncurrency->filter($codomainValue);
+
+            $this->assertSameOrNaN($value, $domainValue);
+
+            if ($isValid) {
+                $this->assertNotSameNorNaN($value, $codomainValue);
+                $this->assertInCodomain($locale, $currencyCode, $codomainValue);
+                $this->assertInDomain($locale, $currencyCode, $domainValue);
+            } else {
+                $this->assertSameOrNaN($value, $codomainValue);
+            }
+
+
         }
     }
 
@@ -211,7 +293,6 @@ class DomainTest extends AbstractTest
      */
     public function testStrictCodomain($locale, $currencyCode, $value, $isValid = true)
     {
-        ini_set('memory_limit', '1G');
         $currency = new Currency($locale, $currencyCode);
         $uncurrency = new Uncurrency($locale, $currencyCode);
 
