@@ -217,13 +217,11 @@ class DomainTest extends AbstractTest
 
         $domainValue = $uncurrency->filter($value);
         $codomainValue = $currency->filter($domainValue);
-        echo PHP_EOL . PHP_EOL;
+//        echo PHP_EOL . PHP_EOL;
 //        var_dump($value);
 //        var_dump($domainValue);
-//        var_dump($uncurrency->getFormatter()->getSymbol(\NumberFormatter::CURRENCY_SYMBOL));
 //        var_dump($codomainValue);
 //        echo PHP_EOL;
-
 
         $this->assertSameOrNaN($value, $codomainValue);
 

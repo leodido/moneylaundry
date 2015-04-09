@@ -142,10 +142,6 @@ class Uncurrency extends AbstractFilter
             if ($result !== false && ((is_float($result) && !is_infinite($result) && !is_nan($result)))) {
                 ErrorHandler::stop();
 
-                $rb = \ResourceBundle::create($this->getLocale(), 'ICUDATA-curr', true);
-                var_dump($rb->get('Currencies')->get($this->getCurrencyCode())->get(0));
-                var_dump($formatter->getSymbol(\NumberFormatter::CURRENCY_SYMBOL));
-
                 // Check if the parsing finished before the end of the input
                 if ($position !== grapheme_strlen($value)) {
                     return $unfilteredValue;
@@ -161,7 +157,26 @@ class Uncurrency extends AbstractFilter
                     if ($fractionDigits !== $countedDecimals) {
                         return $unfilteredValue;
                     }
+                }
 
+                // FIXME: handle errors/excpetion when resources are not found
+                $currencyResources = \ResourceBundle::create($this->getLocale(), 'ICUDATA-curr', true);
+                var_dump($this->getLocale());
+                var_dump($this->getCurrencyCode());
+                $currencySymbols = $currencyResources->get('Currencies');
+                $currencyCodeSymbols = $currencySymbols->get($this->getCurrencyCode());
+                if (!$currencyCodeSymbols) {
+                    $locale = $this->getLocale();
+                    $locale = substr($locale, 0, strrpos($locale, '_'));
+                    $currencyResources = \ResourceBundle::create($locale, 'ICUDATA-curr', true);
+                    var_dump($this->getLocale());
+                    var_dump($this->getCurrencyCode());
+                    $currencySymbols = $currencyResources->get('Currencies');
+                    $currencyCodeSymbols = $currencySymbols->get($this->getCurrencyCode());
+                }
+                $currencySymbol = $currencyCodeSymbols->get(0);
+                if ($this->getCurrencyCorrectness() && grapheme_strpos($value, $currencySymbol) === false) {
+                    return $unfilteredValue;
                 }
 
                 return $result;
