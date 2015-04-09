@@ -32,12 +32,7 @@ abstract class AbstractFilter extends AbstractLocale
     public function getFormatter()
     {
         if ($this->formatter === null) {
-            $formatter = \NumberFormatter::create($this->getLocale(), \NumberFormatter::CURRENCY);
-            if (!$formatter) {
-                throw new Exception\RuntimeException(
-                    'Can not create NumberFormatter instance; ' . intl_get_error_message()
-                );
-            }
+            $formatter = new \NumberFormatter($this->getLocale(), \NumberFormatter::CURRENCY);
             $this->setFormatter($formatter);
         }
 

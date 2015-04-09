@@ -16,6 +16,4 @@ $GLOBALS['INTL_ICU_VERSION'] = constant('INTL_ICU_VERSION');
 echo 'Settings:' . PHP_EOL;
 echo sprintf('intl: %s', $GLOBALS['INTL_EXT_VERSION']) . PHP_EOL;
 echo sprintf('icu: %s', $GLOBALS['INTL_ICU_VERSION']) . PHP_EOL;
-echo sprintf('LC_MONETARY: %s', setlocale(LC_MONETARY, '0')) . PHP_EOL;
-echo sprintf('LC_NUMERIC: %s', setlocale(LC_NUMERIC, '0')) . PHP_EOL;
 echo PHP_EOL;
