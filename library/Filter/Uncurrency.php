@@ -134,7 +134,7 @@ class Uncurrency extends AbstractFilter
              * The following parsing mode can work with a predefined currency code ONLY.
              * Also it should be more strict and faster than parseCurrency
              */
-            $this->setupCurrencyCode();
+            $currencyCode = $this->setupCurrencyCode();
             $result = $formatter->parse($value, \NumberFormatter::TYPE_DOUBLE, $position);
             $fractionDigits = $formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS);
 
@@ -159,22 +159,7 @@ class Uncurrency extends AbstractFilter
                     }
                 }
 
-                // FIXME: handle errors/excpetion when resources are not found
-                $currencyResources = \ResourceBundle::create($this->getLocale(), 'ICUDATA-curr', true);
-                var_dump($this->getLocale());
-                var_dump($this->getCurrencyCode());
-                $currencySymbols = $currencyResources->get('Currencies');
-                $currencyCodeSymbols = $currencySymbols->get($this->getCurrencyCode());
-                if (!$currencyCodeSymbols) {
-                    $locale = $this->getLocale();
-                    $locale = substr($locale, 0, strrpos($locale, '_'));
-                    $currencyResources = \ResourceBundle::create($locale, 'ICUDATA-curr', true);
-                    var_dump($this->getLocale());
-                    var_dump($this->getCurrencyCode());
-                    $currencySymbols = $currencyResources->get('Currencies');
-                    $currencyCodeSymbols = $currencySymbols->get($this->getCurrencyCode());
-                }
-                $currencySymbol = $currencyCodeSymbols->get(0);
+                $currencySymbol = $this->getDefaultCurrencySymbol($this->getLocale(), $currencyCode);
                 if ($this->getCurrencyCorrectness() && grapheme_strpos($value, $currencySymbol) === false) {
                     return $unfilteredValue;
                 }
@@ -413,4 +398,40 @@ class Uncurrency extends AbstractFilter
             $decimals
         );
     }
+
+    protected function getDefaultCurrencySymbol($locale, $currencyCode)
+    {
+        $originalLocale = $locale; // debug only
+
+        $currencySymbol = null;
+
+        while(true) {
+            $currencyResources = \ResourceBundle::create($locale, 'ICUDATA-curr', true);
+            if ($currencyResources instanceof \ResourceBundle) {
+                $currencySymbols = $currencyResources->get('Currencies');
+                if ($currencySymbols instanceof \ResourceBundle) {
+                    $currencyCodeSymbols = $currencySymbols->get($this->getCurrencyCode());
+                    if ($currencyCodeSymbols instanceof \ResourceBundle) {
+                        if ($currencySymbol = $currencyCodeSymbols->get(0)) {
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($locale == 'root') {
+                var_dump('curreny symbol not found for ' . $originalLocale . ' ' . $currencyCode);
+                break;
+            }
+
+            if (strpos($locale, '_') !== false) {
+                $locale = explode('_', $locale)[0];
+            } else {
+                $locale = 'root';
+            }
+        }
+
+        return $currencySymbol;
+    }
+
 }
