@@ -147,30 +147,49 @@ class Uncurrency extends AbstractFilter
                     return $unfilteredValue;
                 }
 
+                $currencySymbol = $this->getFirstCurrencySymbol($this->getLocale(), $currencyCode);
+                if ($this->getCurrencyCorrectness() && grapheme_strpos($value, $currencySymbol) === false) {
+                    return $unfilteredValue;
+                }
+
+
                 // Check if the num. of decimal digits match the requirement (unless the result is not finite or is nan)
                 if ($this->getScaleCorrectness()) {
                     $countedDecimals = $this->countDecimalDigits(
                         $value,
-                        $formatter->getSymbol(\NumberFormatter::MONETARY_SEPARATOR_SYMBOL)
+                        $formatter->getSymbol(\NumberFormatter::MONETARY_SEPARATOR_SYMBOL),
+                        $currencySymbol
                     );
 
-                    if ($fractionDigits !== $countedDecimals) { // FIXME: investigate if it is better to use >= here
+                    if ($fractionDigits !== $countedDecimals) { // FIXME: investigate if it is better to use >= here: NO
                         return $unfilteredValue;
                     }
-                }
-
-                $currencySymbol = $this->getFirstCurrencySymbol($this->getLocale(), $currencyCode);
-                if ($this->getCurrencyCorrectness() && grapheme_strpos($value, $currencySymbol) === false) {
-                    return $unfilteredValue;
                 }
 
                 return $result;
             }
 
             // Retrieve symbols
-            $symbols = $this->getSymbols(); // FIXME: parse and parseCurrancy could use different symbols
+//            $symbols = $this->getSymbols(); // FIXME: parse and parseCurrancy could use different symbols
             // when used with non default currency code
 
+            $symbolKeys = [
+                self::CURRENCY_SYMBOL,
+                self::GROUP_SEPARATOR_SYMBOL,
+                self::SEPARATOR_SYMBOL,
+                self::INFINITY_SYMBOL,
+                self::NAN_SYMBOL,
+                self::POSITIVE_PREFIX,
+                self::POSITIVE_SUFFIX,
+                self::NEGATIVE_PREFIX,
+                self::NEGATIVE_SUFFIX,
+                self::FRACTION_DIGITS,
+            ];
+
+            $symbols = [];
+            foreach ($symbolKeys as $symbol) {
+                $symbols[$symbol] = $this->getSymbol($symbol);
+            }
 
             // At this stage result is FALSE and input probably is not a well-formatted currency
 
@@ -200,7 +219,11 @@ class Uncurrency extends AbstractFilter
                 // Get decimal place info
                 // FIXME: parse and parseCurrancy could use different symbols
                 // when used with non default currency code
-                $numDecimals = $this->countDecimalDigits($value, $symbols[self::SEPARATOR_SYMBOL]);
+                $currencySymbol = $this->getFirstCurrencySymbol($this->getLocale(), $currencyCode);
+                $numDecimals = $this->countDecimalDigits(
+                    $value,
+                    $symbols[self::SEPARATOR_SYMBOL],
+                    $currencySymbol);
 
                 // Check if the number of decimal digits match the requirement
                 if ($this->getScaleCorrectness() && $numDecimals !== $fractionDigits) {
@@ -241,38 +264,38 @@ class Uncurrency extends AbstractFilter
         return $value;
     }
 
-    /**
-     * Get all the symbols
-     *
-     * @return array
-     */
-    public function getSymbols()
-    {
-        if (!$this->formatter) {
-            throw new I18nException\RuntimeException('An instance of NumberFormatted is required.');
-        }
-
-        $symbolKeys = [
-            self::CURRENCY_SYMBOL,
-            self::GROUP_SEPARATOR_SYMBOL,
-            self::SEPARATOR_SYMBOL,
-            self::INFINITY_SYMBOL,
-            self::NAN_SYMBOL,
-            self::POSITIVE_PREFIX,
-            self::POSITIVE_SUFFIX,
-            self::NEGATIVE_PREFIX,
-            self::NEGATIVE_SUFFIX,
-            self::FRACTION_DIGITS,
-        ];
-
-        $symbols = [];
-        foreach ($symbolKeys as $symbol) {
-            $symbols[$symbol] = $this->getSymbol($symbol);
-        }
-
-        return $symbols;
-    }
-
+//    /**
+//     * Get all the symbols
+//     *
+//     * @return array
+//     */
+//    public function getSymbols()
+//    {
+//        if (!$this->formatter) {
+//            throw new I18nException\RuntimeException('An instance of NumberFormatted is required.');
+//        }
+//
+//        $symbolKeys = [
+//            self::CURRENCY_SYMBOL,
+//            self::GROUP_SEPARATOR_SYMBOL,
+//            self::SEPARATOR_SYMBOL,
+//            self::INFINITY_SYMBOL,
+//            self::NAN_SYMBOL,
+//            self::POSITIVE_PREFIX,
+//            self::POSITIVE_SUFFIX,
+//            self::NEGATIVE_PREFIX,
+//            self::NEGATIVE_SUFFIX,
+//            self::FRACTION_DIGITS,
+//        ];
+//
+//        $symbols = [];
+//        foreach ($symbolKeys as $symbol) {
+//            $symbols[$symbol] = $this->getSymbol($symbol);
+//        }
+//
+//        return $symbols;
+//    }
+//
     /**
      * Retrieve single symbol by its constant identifier
      *
@@ -381,10 +404,14 @@ class Uncurrency extends AbstractFilter
      *
      * @param string $number
      * @param string $separatorSymbol
+     * @param string $currencySymbol
      * @return int
      */
-    protected function countDecimalDigits($number, $separatorSymbol)
+    protected function countDecimalDigits($number, $separatorSymbol, $currencySymbol)
     {
+        // Remove currency symbol (if any) from string
+        $number = str_replace($currencySymbol, '', $number);
+        // Retrieve last occurence of monetary separator symbol
         $lastOccurence = grapheme_strrpos($number, $separatorSymbol);
         if ($lastOccurence === false) {
             return 0;

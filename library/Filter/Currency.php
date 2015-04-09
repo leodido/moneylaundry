@@ -75,9 +75,10 @@ class Currency extends AbstractFilter
 
             ErrorHandler::stop();
 
-            if ($result === false) {
-                return $unfilteredValue;
-            }
+            // FIXME: verify that this, given the initial IF condition, never happens
+            // if ($result === false) {
+            // return $unfilteredValue;
+            // }
 
             // Retrieve the precision internally used by the formatter (i.e., depends from locale and currency code)
             $precision = $formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS);

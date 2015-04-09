@@ -44,15 +44,6 @@ class CurrencyTest extends AbstractTest
     {
         $filter = new Currency('it_IT');
 
-        // Filter number represented in scientific notation
-        // FIXME: testing scientific notation in this way does not make sense:
-        //        the following values are litteral floats, they are not numeric string
-        //        repressented in scientifi notation
-//         $this->assertInternalType('string', $filter->filter(1e-2));
-//         $this->assertEquals('0,01 €', $filter->filter(1e-2));
-//         $this->assertInternalType('string', $filter->filter(1e2));
-//         $this->assertEquals('100,00 €', $filter->filter(1e2));
-
         // Check currency symbol position (for oldier ICU versions)
         $filter->filter(1.1); // Init formatter
         $prefix = $filter->getFormatter()->getTextAttribute(\NumberFormatter::POSITIVE_PREFIX);
@@ -76,7 +67,6 @@ class CurrencyTest extends AbstractTest
         $this->assertSame("", $filter->filter(""));
         $this->assertSame([], $filter->filter([]));
         $this->assertSame($filter, $filter->filter($filter)); // testing with an object
-
     }
 
     public function testFilterWithCustomCurrencyCode()
@@ -92,9 +82,6 @@ class CurrencyTest extends AbstractTest
         // Filter usual numbers
         $this->assertInternalType('string', $filter->filter(1.10));
         $this->assertEquals($prefix.'1,10'.$suffix, $filter->filter(1.10));
-        // Filter number represented in scientific notation
-//         $this->assertInternalType('string', $filter->filter(1e-2));
-//         $this->assertEquals('0,01 £', $filter->filter(1e-2));
     }
 
     public function testFilterInfinityValues()
@@ -110,5 +97,13 @@ class CurrencyTest extends AbstractTest
         $filter = new Currency('ar_QA', 'EUR');
 
         $this->assertTrue(is_nan($filter->filter(NAN)));
+    }
+
+    public function testFloatWithImproperScale()
+    {
+        $filter = new Currency('it_IT');
+        $filter->setScaleCorrectness(true);
+
+        $this->assertEquals(123456789.123456789, $filter->filter(123456789.123456789));
     }
 }
