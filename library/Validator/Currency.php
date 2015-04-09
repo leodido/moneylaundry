@@ -47,65 +47,67 @@ class Currency extends AbstractValidator
 
 
     /**
-     * Fraction digit obligatoriness option
+     * Scale correctness option.
+     *
      * @var bool
      */
-    protected $fractionDigitsMandatory = Uncurrency::DEFAULT_SCALE_CORRECTNESS;
+    protected $scaleCorrectness = Uncurrency::DEFAULT_SCALE_CORRECTNESS;
 
     /**
-     * Set whether to check or not that the number of decimal places is as requested by current locale pattern
+     * Set whether to check if the the number of decimal places is equal to the that of the current locale pattern.
      *
-     * @param  bool $exactFractionDigits
+     * @param  bool $scaleCorrectness
      * @return $this
      */
-    public function setFractionDigitsMandatory($exactFractionDigits)
+    public function setScaleCorrectness($scaleCorrectness)
     {
-        $this->fractionDigitsMandatory = (bool) $exactFractionDigits;
+        $this->scaleCorrectness = (bool) $scaleCorrectness;
         return $this;
     }
 
     /**
-     * The fraction digits have to be spiecified and exact?
+     * The number of decimal places have to be correct?
      *
      * @return bool
      */
-    public function isFractionDigitsMandatory()
+    public function getScaleCorrectness()
     {
-        return $this->fractionDigitsMandatory;
+        return $this->scaleCorrectness;
     }
 
     /**
-     * Currency symbol obligatoriness option
+     * Currency correctness (and presence) option.
+     *
      * @var bool
      */
-    protected $currencySymbolMandatory = Uncurrency::DEFAULT_CURRENCY_CORRECTNESS;
+    protected $currencyCorrectness = Uncurrency::DEFAULT_CURRENCY_CORRECTNESS;
 
     /**
-     * Set whether the currency symbol is mandatory or not
+     * Set whether the currency presence and correctness is mandatory or not.
      *
-     * @param $currencySymbolMandatory
+     * @param $currencyCorrectness
      * @return $this
      */
-    public function setCurrencySymbolMandatory($currencySymbolMandatory)
+    public function setCurrencyCorrectness($currencyCorrectness)
     {
-        $this->currencySymbolMandatory = (bool) $currencySymbolMandatory;
+        $this->currencyCorrectness = (bool) $currencyCorrectness;
         return $this;
     }
 
     /**
-     * Is the currency symbol mandatory?
+     * Is the currency presence and correctness mandatory?
      *
      * @return bool
      */
-    public function isCurrencySymbolMandatory()
+    public function getCurrencyCorrectness()
     {
-        return $this->currencySymbolMandatory;
+        return $this->currencyCorrectness;
     }
 
     protected $currencyCode;
 
     /**
-     * Set the currency code
+     * Set the currency code.
      *
      * @param   string|null $currencyCode
      * @return  $this
@@ -117,24 +119,24 @@ class Currency extends AbstractValidator
     }
 
     /**
-     * Retrieve the currency code
+     * Retrieve the currency code.
      *
      * @return string|null
      */
     public function getCurrencyCode()
     {
-        return $this->currencyCode;
+        return $this->currencyCode; // FIXME
     }
 
     /**
-     * Locale option
+     * Locale option.
      *
      * @var string|null
      */
     protected $locale;
 
     /**
-     * Returns the set locale
+     * Retrieve the locale.
      *
      * @return string
      */
@@ -147,7 +149,7 @@ class Currency extends AbstractValidator
     }
 
     /**
-     * Set the locale to use
+     * Set the locale.
      *
      * @param string|null $locale
      * @return Float
@@ -159,7 +161,7 @@ class Currency extends AbstractValidator
     }
 
     /**
-     * Whether to allow negative currency amount or not
+     * Whether to allow negative currency amount or not.
      *
      * @var bool
      */
@@ -176,7 +178,7 @@ class Currency extends AbstractValidator
     }
 
     /**
-     * Set the negative allowed option
+     * Set the negative allowed option.
      *
      * @param boolean $negativeAllowed
      * @return $this
@@ -188,10 +190,10 @@ class Currency extends AbstractValidator
     }
 
     /**
-     * Constructor for the currency validator
+     * Constructor for the currency validator.
      *
      * @param array|\Traversable $options
-     * @throws I18nException\ExtensionNotLoadedException if ext/intl is not present
+     * @throws I18nException\ExtensionNotLoadedException Extension intl is not present
      */
     public function __construct($options = [])
     {
@@ -234,8 +236,9 @@ class Currency extends AbstractValidator
      *
      * It validates according to the specified options, i.e. whether to consider valid:
      * a negative currency amount,
-     * a currency without currency symbol,
-     * a currency with an inexact number of decimal places.
+     * a currency different than the locale's default,
+     * a currency string that could not contain currency symbol,
+     * a currency string that could contain an inexact number of decimal places.
      *
      * @param  string $value
      * @return bool
@@ -249,13 +252,16 @@ class Currency extends AbstractValidator
             return false;
         }
 
+        // Setup filter
         $filter = new Uncurrency(
             $this->getLocale(),
-            $this->getCurrencyCode(),
-            $this->isFractionDigitsMandatory(),
-            $this->isCurrencySymbolMandatory()
+            $this->getCurrencyCode()
         );
+        $filter->setScaleCorrectness($this->getScaleCorrectness());
+        $filter->setCurrencyCorrectness($this->getCurrencyCorrectness());
+        // Filtering
         $result = $filter->filter($this->getValue());
+        // Retrieve updated currency code
         $this->currencyCode = $filter->getCurrencyCode();
         if ($result !== $this->getValue()) {
             // Filter succedeed

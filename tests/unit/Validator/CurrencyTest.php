@@ -43,11 +43,11 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('en_US', $validator->getLocale());
         $this->assertEquals(
             Uncurrency::DEFAULT_SCALE_CORRECTNESS,
-            $validator->isFractionDigitsMandatory()
+            $validator->getScaleCorrectness()
         );
         $this->assertEquals(
             Uncurrency::DEFAULT_CURRENCY_CORRECTNESS,
-            $validator->isCurrencySymbolMandatory()
+            $validator->getCurrencyCorrectness()
         );
         $this->assertEquals(CurrencyValidator::DEFAULT_NEGATIVE_ALLOWED, $validator->isNegativeAllowed());
 
@@ -64,49 +64,59 @@ class CurrencyTest extends \PHPUnit_Framework_TestCase
         $validator = new CurrencyValidator([
             'locale' => 'it_IT',
             'currency_code' => 'EUR',
-            'fraction_digits_mandatory' => false,
-            'currency_symbol_mandatory' => false,
+            'scale_correctness' => false,
+            'currency_correctness' => false,
             'negative_allowed' => false
         ]);
-        $this->assertFalse($validator->isFractionDigitsMandatory());
-        $this->assertFalse($validator->isCurrencySymbolMandatory());
+        $this->assertFalse($validator->getScaleCorrectness());
+        $this->assertFalse($validator->getCurrencyCorrectness());
         $this->assertFalse($validator->isNegativeAllowed());
 
         // Testing traversable
         $traversableOpts = new ArrayObject([
                 'locale' => 'it_IT',
                 'currency_code' => 'EUR',
-                'fraction_digits_mandatory' => true,
-                'currency_symbol_mandatory' => false,
+                'scale_correctness' => true,
+                'currency_correctness' => false,
                 'negative_allowed' => true
         ]);
         $validator = new CurrencyValidator();
         $validator->setOptions($traversableOpts);
         $this->assertEquals('it_IT', $validator->getLocale());
-        $this->assertTrue($validator->isFractionDigitsMandatory());
-        $this->assertFalse($validator->isCurrencySymbolMandatory());
+        $this->assertTrue($validator->getScaleCorrectness());
+        $this->assertFalse($validator->getCurrencyCorrectness());
         $this->assertTrue($validator->isNegativeAllowed());
     }
 
-    public function testSetLocaleOption()
+    public function testCurrencyCodeOption()
+    {
+        $v = new CurrencyValidator('it_IT');
+        $this->assertNull($v->getCurrencyCode());
+        $v->isValid('1.234,61 €');
+        var_dump($v->getCurrencyCode());
+
+        // FIXME: setCurrencyCode
+    }
+
+    public function testLocaleOption()
     {
         $v = new CurrencyValidator;
         $this->assertInstanceOf('MoneyLaundry\Validator\Currency', $v->setLocale('it_IT'));
         $this->assertEquals($v->getLocale(), 'it_IT');
     }
 
-    public function testCurrencySymbolMandatoryOption()
+    public function testCurrencyCorrectnessOption()
     {
         $v = new CurrencyValidator;
-        $this->assertInstanceOf('MoneyLaundry\Validator\Currency', $v->setCurrencySymbolMandatory(false));
-        $this->assertFalse($v->isCurrencySymbolMandatory());
+        $this->assertInstanceOf('MoneyLaundry\Validator\Currency', $v->setCurrencyCorrectness(false));
+        $this->assertFalse($v->getCurrencyCorrectness());
     }
 
-    public function testFractionDigitsMandatoryOption()
+    public function testScaleCorrectnessOption()
     {
         $v = new CurrencyValidator;
-        $this->assertInstanceOf('MoneyLaundry\Validator\Currency', $v->setFractionDigitsMandatory(false));
-        $this->assertFalse($v->isFractionDigitsMandatory());
+        $this->assertInstanceOf('MoneyLaundry\Validator\Currency', $v->setScaleCorrectness(false));
+        $this->assertFalse($v->getScaleCorrectness());
     }
 
     public function testNegativeAllowedOption()

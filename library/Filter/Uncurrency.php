@@ -154,12 +154,12 @@ class Uncurrency extends AbstractFilter
                         $formatter->getSymbol(\NumberFormatter::MONETARY_SEPARATOR_SYMBOL)
                     );
 
-                    if ($fractionDigits !== $countedDecimals) {
+                    if ($fractionDigits !== $countedDecimals) { // FIXME: investigate if it is better to use >= here
                         return $unfilteredValue;
                     }
                 }
 
-                $currencySymbol = $this->getDefaultCurrencySymbol($this->getLocale(), $currencyCode);
+                $currencySymbol = $this->getFirstCurrencySymbol($this->getLocale(), $currencyCode);
                 if ($this->getCurrencyCorrectness() && grapheme_strpos($value, $currencySymbol) === false) {
                     return $unfilteredValue;
                 }
@@ -190,7 +190,7 @@ class Uncurrency extends AbstractFilter
                 '#^[%s]+$#%s',
                 $numbers . implode('', array_map('preg_quote', $regexSymbols)),
                 $flags
-            );
+            ); // FIXME: pay attention to NaN and INF symbols here
 
             // Check that value contains only allowed characters (digits, group and decimal separator)
             $result = false;
@@ -227,6 +227,7 @@ class Uncurrency extends AbstractFilter
                     );
                     $value = preg_replace($regex, $decimalNegPrefix . '\\1' . $decimalNegSuffix, $value);
                 }
+
 
                 // Try to parse as a simple decimal (formatted) number
                 $result = $decimal->parse($value, \NumberFormatter::TYPE_DOUBLE);
@@ -399,13 +400,13 @@ class Uncurrency extends AbstractFilter
         );
     }
 
-    protected function getDefaultCurrencySymbol($locale, $currencyCode)
+    protected function getFirstCurrencySymbol($locale, $currencyCode)
     {
         $originalLocale = $locale; // debug only
 
         $currencySymbol = null;
 
-        while(true) {
+        while (true) {
             $currencyResources = \ResourceBundle::create($locale, 'ICUDATA-curr', true);
             if ($currencyResources instanceof \ResourceBundle) {
                 $currencySymbols = $currencyResources->get('Currencies');
@@ -433,5 +434,5 @@ class Uncurrency extends AbstractFilter
 
         return $currencySymbol;
     }
-
 }
+

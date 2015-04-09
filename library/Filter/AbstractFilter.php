@@ -45,7 +45,7 @@ abstract class AbstractFilter extends AbstractLocale
     }
 
     /**
-     * Set a number formatter
+     * Set a number formatter.
      *
      * @param  \NumberFormatter $formatter
      * @return $this
@@ -59,7 +59,7 @@ abstract class AbstractFilter extends AbstractLocale
     }
 
     /**
-     * Set the currency code
+     * Set the currency code.
      *
      * @param   string|null $currencyCode
      * @return  $this
@@ -71,7 +71,7 @@ abstract class AbstractFilter extends AbstractLocale
     }
 
     /**
-     * Retrieve the currency code
+     * Retrieve the currency code.
      *
      * @return string|null
      */
@@ -89,8 +89,8 @@ abstract class AbstractFilter extends AbstractLocale
     /**
      * Setup the formatter's currency code, then return it.
      *
-     * Use the set currency code if any or the default from NumberFormatter.
-     * Note that it creates a NumberFormatter instance if it is not yet instantiated.
+     * It uses the currency code user has set or the default one from NumberFormatter.
+     * Infact it also creates a NumberFormatter instance if it is not yet instantiated.
      *
      * @return string
      */
@@ -103,7 +103,7 @@ abstract class AbstractFilter extends AbstractLocale
     }
 
     /**
-     * Set the locale
+     * Set the locale.
      *
      * @param  string|null $locale
      * @return $this
@@ -114,22 +114,20 @@ abstract class AbstractFilter extends AbstractLocale
         return parent::setLocale($locale);
     }
 
-
     /**
-     * Set whether to check or not that the number of decimal places is as requested by current locale pattern
+     * Set whether to check if the number of decimal places is equal to that requested by the current locale pattern.
      *
-     * @param  bool $exactFractionDigits
+     * @param  bool $scaleCorrectness
      * @return $this
      */
-    public function setScaleCorrectness($exactFractionDigits)
+    public function setScaleCorrectness($scaleCorrectness)
     {
-        $this->options['scale_correctness'] = (bool) $exactFractionDigits;
+        $this->options['scale_correctness'] = (bool) $scaleCorrectness;
         return $this;
     }
 
     /**
-     * The fraction digits have to be spiecified and exact?
-     * @todo improve description
+     * The number of decimal places have to be correct?
      *
      * @return bool
      */
@@ -139,14 +137,14 @@ abstract class AbstractFilter extends AbstractLocale
     }
 
     /**
-     * Set whether the currency presence and correctness is mandatory or not
+     * Set whether the currency presence and correctness is mandatory or not.
      *
-     * @param $currencySymbolMandatory
+     * @param $currencyCorrectness
      * @return $this
      */
-    public function setCurrencyCorrectness($currencySymbolMandatory)
+    public function setCurrencyCorrectness($currencyCorrectness)
     {
-        $this->options['currency_correctness'] = (bool) $currencySymbolMandatory;
+        $this->options['currency_correctness'] = (bool) $currencyCorrectness;
         return $this;
     }
 
