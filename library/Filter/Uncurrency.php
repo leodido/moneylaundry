@@ -113,7 +113,7 @@ class Uncurrency extends AbstractFilter
             $unfilteredValue = $value;
 
             // Replace spaces with NBSP (non breaking spaces)
-            $value = str_replace("\x20", "\xC2\xA0", $value); // FIXME: can be removed?
+            // $value = str_replace("\x20", "\xC2\xA0", $value); // FIXME: can be removed?
 
 
             // Parse as currency
@@ -143,15 +143,15 @@ class Uncurrency extends AbstractFilter
                 ErrorHandler::stop();
 
                 // Check if the parsing finished before the end of the input
-                if ($position !== grapheme_strlen($value)) {
+                if ($position < grapheme_strlen($value)) {
                     return $unfilteredValue;
                 }
 
                 $currencySymbol = $this->getFirstCurrencySymbol($this->getLocale(), $currencyCode);
+
                 if ($this->getCurrencyCorrectness() && grapheme_strpos($value, $currencySymbol) === false) {
                     return $unfilteredValue;
                 }
-
 
                 // Check if the num. of decimal digits match the requirement (unless the result is not finite or is nan)
                 if ($this->getScaleCorrectness()) {
@@ -223,7 +223,8 @@ class Uncurrency extends AbstractFilter
                 $numDecimals = $this->countDecimalDigits(
                     $value,
                     $symbols[self::SEPARATOR_SYMBOL],
-                    $currencySymbol);
+                    $currencySymbol
+                );
 
                 // Check if the number of decimal digits match the requirement
                 if ($this->getScaleCorrectness() && $numDecimals !== $fractionDigits) {
@@ -429,38 +430,37 @@ class Uncurrency extends AbstractFilter
 
     protected function getFirstCurrencySymbol($locale, $currencyCode)
     {
-        $originalLocale = $locale; // debug only
-
         $currencySymbol = null;
+        $parent = null;
 
-        while (true) {
-            $currencyResources = \ResourceBundle::create($locale, 'ICUDATA-curr', true);
-            if ($currencyResources instanceof \ResourceBundle) {
-                $currencySymbols = $currencyResources->get('Currencies');
-                if ($currencySymbols instanceof \ResourceBundle) {
-                    $currencyCodeSymbols = $currencySymbols->get($this->getCurrencyCode());
-                    if ($currencyCodeSymbols instanceof \ResourceBundle) {
-                        if ($currencySymbol = $currencyCodeSymbols->get(0)) {
-                            break;
-                        }
+        $currencyResources = \ResourceBundle::create($locale, 'ICUDATA-curr', false);
+        if ($currencyResources instanceof \ResourceBundle) {
+            $currencySymbols = $currencyResources->get('Currencies');
+            $parent = $currencyResources->get('%%Parent');
+            if ($currencySymbols instanceof \ResourceBundle) {
+                $currencyCodeSymbols = $currencySymbols->get($this->getCurrencyCode());
+                if ($currencyCodeSymbols instanceof \ResourceBundle) {
+                    if ($currencySymbol = $currencyCodeSymbols->get(0)) {
+                        return $currencySymbol;
                     }
                 }
             }
-
-            if ($locale == 'root') {
-                $currencySymbol = $currencyCode; // symbol not found
-//                 var_dump('curreny symbol not found for ' . $originalLocale . ' ' . $currencyCode);
-                break;
-            }
-
-            if (strpos($locale, '_') !== false) {
-                $locale = explode('_', $locale)[0];
-            } else {
-                $locale = 'root';
-            }
         }
 
-        return $currencySymbol;
+        if ($parent) {
+            return $this->getFirstCurrencySymbol($parent, $currencyCode);
+        }
+
+        if (strpos($locale, '_') !== false) {
+            $locale = explode('_', $locale);
+            array_pop($locale);
+            $locale = implode('_', $locale);
+            return $this->getFirstCurrencySymbol($locale, $currencyCode);
+        }
+
+        return $currencyCode;
+
+
     }
 }
 

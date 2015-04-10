@@ -24,7 +24,7 @@ class DomainTest extends AbstractTest
         ini_set('memory_limit', '6G');
 
         // All available locales
-        $locales = \ResourceBundle::getLocales('');  // FIXME: debug
+        $locales = \ResourceBundle::getLocales('');
 
         // All available currencies
         $currencies = [];
@@ -33,8 +33,6 @@ class DomainTest extends AbstractTest
         foreach ($currencySymbols as $currencyCode => $bundle) {
             $currencies[] = $currencyCode;
         }
-
-//        $currencies = ['KMF']; // FIXME: debug
 
         $data = [];
 
@@ -54,8 +52,8 @@ class DomainTest extends AbstractTest
         // valid values for all currencies
         $validDomainValues = [
             (float) -10,
-            (float) 0,
-            (float) 10,
+//            (float) 0,
+//            (float) 10,
         ];
 
         // invalid values for all currencies
