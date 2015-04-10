@@ -459,8 +459,5 @@ class Uncurrency extends AbstractFilter
         }
 
         return $currencyCode;
-
-
     }
 }
-
