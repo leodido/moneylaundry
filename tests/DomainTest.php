@@ -51,9 +51,9 @@ class DomainTest extends AbstractTest
     {
         // valid values for all currencies
         $validDomainValues = [
-            (float) -10,
-//            (float) 0,
-//            (float) 10,
+           (float) -10,
+           (float) 0,
+           (float) 10,
         ];
 
         // invalid values for all currencies
@@ -82,9 +82,17 @@ class DomainTest extends AbstractTest
         $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
         $formatter->setTextAttribute($formatter::CURRENCY_CODE, $currencyCode);
         $fractionDigits = $formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS);
+
         $tmpValid[]   = (float) (1 + pow(10, -$fractionDigits));
-        $tmpValid[] = (float) (1 + pow(10, -($fractionDigits - 1)));
         $tmpInvalid[] = (float) (1 + pow(10, -($fractionDigits + 1)));
+
+        $pi = pi();
+        $tmpValid[] = round($pi, $fractionDigits);
+        if ($fractionDigits > 2) {
+            $tmpValid[] = round($pi, $fractionDigits-1);
+            $tmpValid[] = (float) (1 + pow(10, -($fractionDigits - 1)));
+        }
+        $tmpInvalid[] = round($pi, $fractionDigits+1);
 
         $return = [];
 

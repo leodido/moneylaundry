@@ -434,6 +434,7 @@ class Uncurrency extends AbstractFilter
         $currencySymbol = null;
         $parent = null;
 
+        // Check first in passed locale
         $currencyResources = \ResourceBundle::create($locale, 'ICUDATA-curr', false);
         if ($currencyResources instanceof \ResourceBundle) {
             $currencySymbols = $currencyResources->get('Currencies');
@@ -442,12 +443,18 @@ class Uncurrency extends AbstractFilter
                 $currencyCodeSymbols = $currencySymbols->get($this->getCurrencyCode());
                 if ($currencyCodeSymbols instanceof \ResourceBundle) {
                     if ($currencySymbol = $currencyCodeSymbols->get(0)) {
-                        return $currencySymbol;
+                        return $currencySymbol; // found
                     }
                 }
             }
         }
 
+        // If root, no other fallbacks are available. Return the ISO currency code as default.
+        if ($locale === 'root') {
+            return $currencyCode;
+        }
+
+        // If any, check in parent
         if ($parent) {
             $currencyResources = \ResourceBundle::create($parent, 'ICUDATA-curr', false);
             if ($currencyResources instanceof \ResourceBundle) {
@@ -456,17 +463,14 @@ class Uncurrency extends AbstractFilter
                     $currencyCodeSymbols = $currencySymbols->get($this->getCurrencyCode());
                     if ($currencyCodeSymbols instanceof \ResourceBundle) {
                         if ($currencySymbol = $currencyCodeSymbols->get(0)) {
-                            return $currencySymbol;
+                            return $currencySymbol; // Found
                         }
                     }
                 }
             }
         }
 
-        if ($locale == 'root') {
-            return $currencyCode;
-        }
-
+        // Fallback locale up to root
         if (strpos($locale, '_') !== false) {
             $locale = explode('_', $locale);
             array_pop($locale);
