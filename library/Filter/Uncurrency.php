@@ -430,6 +430,7 @@ class Uncurrency extends AbstractFilter
 
     protected function getFirstCurrencySymbol($locale, $currencyCode)
     {
+
         $currencySymbol = null;
         $parent = null;
 
@@ -448,16 +449,32 @@ class Uncurrency extends AbstractFilter
         }
 
         if ($parent) {
-            return $this->getFirstCurrencySymbol($parent, $currencyCode);
+            $currencyResources = \ResourceBundle::create($parent, 'ICUDATA-curr', false);
+            if ($currencyResources instanceof \ResourceBundle) {
+                $currencySymbols = $currencyResources->get('Currencies');
+                if ($currencySymbols instanceof \ResourceBundle) {
+                    $currencyCodeSymbols = $currencySymbols->get($this->getCurrencyCode());
+                    if ($currencyCodeSymbols instanceof \ResourceBundle) {
+                        if ($currencySymbol = $currencyCodeSymbols->get(0)) {
+                            return $currencySymbol;
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($locale == 'root') {
+            return $currencyCode;
         }
 
         if (strpos($locale, '_') !== false) {
             $locale = explode('_', $locale);
             array_pop($locale);
             $locale = implode('_', $locale);
-            return $this->getFirstCurrencySymbol($locale, $currencyCode);
+        } else {
+            $locale = 'root';
         }
 
-        return $currencyCode;
+        return $this->getFirstCurrencySymbol($locale, $currencyCode);
     }
 }
