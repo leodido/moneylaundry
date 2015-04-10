@@ -26,6 +26,16 @@ class DomainTest extends AbstractTest
         // All available locales
         $locales = \ResourceBundle::getLocales('');
 
+        // Fake locales
+        $locales[] = 'xx_XX_XXXX';
+        $locales[] = 'en_XX';
+        $locales[] = 'en_US_XXXX';
+        $locales[] = 'xx_Cyrl';
+
+        // Invalid locales
+        $locales[] = 'foobarfoobarfoobar';
+        $locales[] = 'foo bar';
+
         // All available currencies
         $currencies = [];
         $currencyResources = \ResourceBundle::create('en', 'ICUDATA-curr', true);
