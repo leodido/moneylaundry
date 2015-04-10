@@ -456,7 +456,7 @@ class Uncurrency extends AbstractFilter
 
         // If any, check in parent
         if ($parent) {
-            $currencyResources = \ResourceBundle::create($parent, 'ICUDATA-curr', false);
+            $currencyResources = \ResourceBundle::create($parent, 'ICUDATA-curr', true);
             if ($currencyResources instanceof \ResourceBundle) {
                 $currencySymbols = $currencyResources->get('Currencies');
                 if ($currencySymbols instanceof \ResourceBundle) {
@@ -467,6 +467,11 @@ class Uncurrency extends AbstractFilter
                         }
                     }
                 }
+            }
+
+            // If root, no other fallbacks are available. Return the ISO currency code as default.
+            if ($parent === 'root') {
+                return $currencyCode;
             }
         }
 
