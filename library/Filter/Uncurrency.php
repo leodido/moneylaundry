@@ -435,7 +435,7 @@ class Uncurrency extends AbstractFilter
         $parent = null;
 
         // Check first in passed locale
-        $currencyResources = \ResourceBundle::create($locale, 'ICUDATA-curr');
+        $currencyResources = \ResourceBundle::create($locale, 'ICUDATA-curr', false);
         if ($currencyResources instanceof \ResourceBundle) {
             $currencySymbols = $currencyResources->get('Currencies');
             $parent = $currencyResources->get('%%Parent');
@@ -456,7 +456,7 @@ class Uncurrency extends AbstractFilter
 
         // If any, check in parent
         if ($parent) {
-            $currencyResources = \ResourceBundle::create($parent, 'ICUDATA-curr');
+            $currencyResources = \ResourceBundle::create($parent, 'ICUDATA-curr', false);
             if ($currencyResources instanceof \ResourceBundle) {
                 $currencySymbols = $currencyResources->get('Currencies');
                 if ($currencySymbols instanceof \ResourceBundle) {
