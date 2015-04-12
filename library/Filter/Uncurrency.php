@@ -119,23 +119,27 @@ class Uncurrency extends AbstractFilter
             // Parse as currency
             ErrorHandler::start();
             $position = 0;
-            /*
-             * parseCurrency MODE
-             *
-             * The following parsing mode can work with multiple currencies.
-             * TODO: could be useful if
-             * Also it should be more strict and faster than parseCurrency getCurrencyObligatoriness() == false
-             */
-//            $result = $formatter->parseCurrency($value, $resultCurrencyCode, $position);
-
-            /*
-             * parse MODE
-             *
-             * The following parsing mode can work with a predefined currency code ONLY.
-             * Also it should be more strict and faster than parseCurrency
-             */
             $currencyCode = $this->setupCurrencyCode();
-            $result = $formatter->parse($value, \NumberFormatter::TYPE_DOUBLE, $position);
+
+            if ($this->getCurrencyCorrectness()) {
+
+                /*
+                 * parse MODE
+                 *
+                 * The following parsing mode allows the predefined currency code ONLY.
+                 * Also it should be more strict and faster than parseCurrency
+                 */
+                $result = $formatter->parse($value, \NumberFormatter::TYPE_DOUBLE, $position);
+            } else {
+
+                /*
+                 * parseCurrency MODE
+                 *
+                 * The following parsing mode can work with multiple currencies.
+                 */
+                $result = $formatter->parseCurrency($value, $resultCurrencyCode, $position);
+            }
+
             $fractionDigits = $formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS);
 
             // Input is a valid currency and the result is within the codomain?
@@ -161,7 +165,7 @@ class Uncurrency extends AbstractFilter
                         $currencySymbol
                     );
 
-                    if ($fractionDigits !== $countedDecimals) { // FIXME: investigate if it is better to use >= here: NO
+                    if ($fractionDigits !== $countedDecimals) {
                         return $unfilteredValue;
                     }
                 }
@@ -169,10 +173,15 @@ class Uncurrency extends AbstractFilter
                 return $result;
             }
 
-            // Retrieve symbols
-//            $symbols = $this->getSymbols(); // FIXME: parse and parseCurrancy could use different symbols
-            // when used with non default currency code
+            // At this stage result is FALSE and input probably is not a well-formatted currency
 
+            // Check if the currency symbol is mandatory (assiming 'parse MODE')
+            if ($this->getCurrencyCorrectness()) {
+                ErrorHandler::stop();
+                return $unfilteredValue;
+            }
+
+            // Retrieve symbols
             $symbolKeys = [
                 self::CURRENCY_SYMBOL,
                 self::GROUP_SEPARATOR_SYMBOL,
@@ -189,14 +198,6 @@ class Uncurrency extends AbstractFilter
             $symbols = [];
             foreach ($symbolKeys as $symbol) {
                 $symbols[$symbol] = $this->getSymbol($symbol);
-            }
-
-            // At this stage result is FALSE and input probably is not a well-formatted currency
-
-            // Check if the currency symbol is mandatory (assiming 'parse MODE')
-            if ($this->getCurrencyCorrectness()) {
-                ErrorHandler::stop();
-                return $unfilteredValue;
             }
 
             // Regex components
@@ -265,38 +266,6 @@ class Uncurrency extends AbstractFilter
         return $value;
     }
 
-//    /**
-//     * Get all the symbols
-//     *
-//     * @return array
-//     */
-//    public function getSymbols()
-//    {
-//        if (!$this->formatter) {
-//            throw new I18nException\RuntimeException('An instance of NumberFormatted is required.');
-//        }
-//
-//        $symbolKeys = [
-//            self::CURRENCY_SYMBOL,
-//            self::GROUP_SEPARATOR_SYMBOL,
-//            self::SEPARATOR_SYMBOL,
-//            self::INFINITY_SYMBOL,
-//            self::NAN_SYMBOL,
-//            self::POSITIVE_PREFIX,
-//            self::POSITIVE_SUFFIX,
-//            self::NEGATIVE_PREFIX,
-//            self::NEGATIVE_SUFFIX,
-//            self::FRACTION_DIGITS,
-//        ];
-//
-//        $symbols = [];
-//        foreach ($symbolKeys as $symbol) {
-//            $symbols[$symbol] = $this->getSymbol($symbol);
-//        }
-//
-//        return $symbols;
-//    }
-//
     /**
      * Retrieve single symbol by its constant identifier
      *
