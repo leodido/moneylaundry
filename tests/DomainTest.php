@@ -197,13 +197,6 @@ class DomainTest extends AbstractTest
             $codomainValue = $currency->filter($value);
             $domainValue = $uncurrency->filter($codomainValue);
 
-//            if (is_float($value) && $value == -10) {
-//                echo '--------------'. PHP_EOL;
-//                var_dump($testValues);
-//                var_dump($codomainValue);
-//                var_dump($domainValue);
-//            }
-
             $this->assertSameOrNaN($value, $domainValue);
 
             if ($isValid) {
@@ -233,11 +226,6 @@ class DomainTest extends AbstractTest
 
         $domainValue = $uncurrency->filter($value);
         $codomainValue = $currency->filter($domainValue);
-//        echo PHP_EOL . PHP_EOL;
-//        var_dump($value);
-//        var_dump($domainValue);
-//        var_dump($codomainValue);
-//        echo PHP_EOL;
 
         $this->assertSameOrNaN($value, $codomainValue);
 
@@ -265,11 +253,11 @@ class DomainTest extends AbstractTest
 
         $divisor = pow(10, $precision);
 
-        for($i = $from; $i <= $to; $i++) {
+        for ($i = $from; $i <= $to; $i++) {
             $testValue = (float) $i / $divisor;
             $stringValue = $currency->filter($testValue);
             $value = $uncurrency->filter($stringValue);
-            //echo $testValue . ' -> ' . $stringValue . ' -> ' . $value . PHP_EOL; // DEBUG
+            // echo $testValue . ' -> ' . $stringValue . ' -> ' . $value . PHP_EOL; // DEBUG
             $this->assertInternalType('string', $stringValue);
             $this->assertInternalType('double', $value);
             $this->assertSame($testValue, $value);
@@ -281,11 +269,11 @@ class DomainTest extends AbstractTest
 
         $divisor = pow(10, $precision);
 
-        for($i = $from; $i <= $to; $i++) {
+        for ($i = $from; $i <= $to; $i++) {
             $testValue = (float) $i / $divisor;
             $stringValue = $currency->filter($testValue);
             $value = $uncurrency->filter($stringValue);
-            //echo $testValue . ' -> ' . $stringValue . ' -> ' . $value . PHP_EOL; // DEBUG
+            // echo $testValue . ' -> ' . $stringValue . ' -> ' . $value . PHP_EOL; // DEBUG
             $this->assertInternalType('string', $stringValue);
             $this->assertInternalType('double', $value);
             $this->assertSame($testValue, $value);

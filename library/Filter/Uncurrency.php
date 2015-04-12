@@ -130,7 +130,7 @@ class Uncurrency extends AbstractFilter
 
             if ($this->getBreakingSpaceAllowed()) {
                 // Replace spaces with NBSP (non breaking spaces)
-                $value = str_replace("\x20", "\xC2\xA0", $value); // FIXME: can be removed?
+                $value = str_replace("\x20", "\xC2\xA0", $value); // FIXME? can be removed
             }
 
             // Parse as currency
@@ -139,16 +139,14 @@ class Uncurrency extends AbstractFilter
             $currencyCode = $this->setupCurrencyCode();
 
             if ($this->getCurrencyCorrectness()) {
-
                 /*
                  * parse MODE
                  *
                  * The following parsing mode allows the predefined currency code ONLY.
-                 * Also it should be more strict and faster than parseCurrency
+                 * Also it should be more strict and faster than parseCurrency.
                  */
                 $result = $formatter->parse($value, \NumberFormatter::TYPE_DOUBLE, $position);
             } else {
-
                 /*
                  * parseCurrency MODE
                  *
@@ -289,7 +287,7 @@ class Uncurrency extends AbstractFilter
      * @param int $symbol
      * @return string
      */
-    public function getSymbol($symbol)
+    protected function getSymbol($symbol)
     {
         if (!$this->formatter) {
             throw new I18nException\RuntimeException('An instance of NumberFormatted is required.');
@@ -414,6 +412,13 @@ class Uncurrency extends AbstractFilter
         );
     }
 
+    /**
+     * Retrieve the currency symbol of the given locale anche currency code.
+     *
+     * @param $locale
+     * @param $currencyCode
+     * @return string
+     */
     protected function getFirstCurrencySymbol($locale, $currencyCode)
     {
 
