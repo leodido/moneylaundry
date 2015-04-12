@@ -249,4 +249,46 @@ class DomainTest extends AbstractTest
             $this->assertSameOrNaN($value, $domainValue);
         }
     }
+
+
+    public function testFloatPrecision()
+    {
+        $locale = 'en_US';
+        $currencyCode = 'EUR';
+
+        $currency = new Currency($locale, $currencyCode);
+        $uncurrency = new Uncurrency($locale, $currencyCode);
+
+        $from = -100;
+        $to   = $from + 1100;
+        $precision = 2;
+
+        $divisor = pow(10, $precision);
+
+        for($i = $from; $i <= $to; $i++) {
+            $testValue = (float) $i / $divisor;
+            $stringValue = $currency->filter($testValue);
+            $value = $uncurrency->filter($stringValue);
+            //echo $testValue . ' -> ' . $stringValue . ' -> ' . $value . PHP_EOL; // DEBUG
+            $this->assertInternalType('string', $stringValue);
+            $this->assertInternalType('double', $value);
+            $this->assertSame($testValue, $value);
+        }
+
+        $from = 1E14;
+        $to   = $from + 1000;
+        $precision = 2;
+
+        $divisor = pow(10, $precision);
+
+        for($i = $from; $i <= $to; $i++) {
+            $testValue = (float) $i / $divisor;
+            $stringValue = $currency->filter($testValue);
+            $value = $uncurrency->filter($stringValue);
+            //echo $testValue . ' -> ' . $stringValue . ' -> ' . $value . PHP_EOL; // DEBUG
+            $this->assertInternalType('string', $stringValue);
+            $this->assertInternalType('double', $value);
+            $this->assertSame($testValue, $value);
+        }
+    }
 }
