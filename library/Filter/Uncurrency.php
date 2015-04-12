@@ -25,6 +25,8 @@ use Zend\Stdlib\StringUtils;
  */
 class Uncurrency extends AbstractFilter
 {
+    const DEFAULT_BREAKING_SPACE_ALLOWED = false;
+
     const REGEX_NUMBERS = 0;
     const REGEX_FLAGS = 1;
 
@@ -51,13 +53,9 @@ class Uncurrency extends AbstractFilter
         'locale' => null,
         'currency_code' => null,
         'scale_correctness' => self::DEFAULT_SCALE_CORRECTNESS,
-        'currency_correctness' => self::DEFAULT_CURRENCY_CORRECTNESS
+        'currency_correctness' => self::DEFAULT_CURRENCY_CORRECTNESS,
+        'breaking_space_allowed' => self::DEFAULT_BREAKING_SPACE_ALLOWED,
     ];
-
-    /**
-     * @var array
-     */
-    protected $symbols = [];
 
     /**
      * @var array
@@ -95,6 +93,24 @@ class Uncurrency extends AbstractFilter
     }
 
     /**
+     * @return bool
+     */
+    public function getBreakingSpaceAllowed()
+    {
+        return $this->options['breaking_space_allowed'];
+    }
+
+    /**
+     * @param bool $allow
+     * @return $this
+     */
+    public function setBreakingSpaceAllowed($allow)
+    {
+        $this->options['breaking_space_allowed'] = (bool)  $allow;
+        return $this;
+    }
+
+    /**
      * Returns the result of filtering $value
      *
      * @param  mixed $value
@@ -102,6 +118,9 @@ class Uncurrency extends AbstractFilter
      */
     public function filter($value)
     {
+        // Store original value
+        $unfilteredValue = $value;
+
         if (is_string($value)) {
             // Initialization
             $formatter = $this->getFormatter();
@@ -109,12 +128,10 @@ class Uncurrency extends AbstractFilter
             // Disable scientific notation
             $formatter->setSymbol(\NumberFormatter::EXPONENTIAL_SYMBOL, null);
 
-            // Store original value
-            $unfilteredValue = $value;
-
-            // Replace spaces with NBSP (non breaking spaces)
-            // $value = str_replace("\x20", "\xC2\xA0", $value); // FIXME: can be removed?
-
+            if ($this->getBreakingSpaceAllowed()) {
+                // Replace spaces with NBSP (non breaking spaces)
+                $value = str_replace("\x20", "\xC2\xA0", $value); // FIXME: can be removed?
+            }
 
             // Parse as currency
             ErrorHandler::start();
@@ -261,9 +278,9 @@ class Uncurrency extends AbstractFilter
             ErrorHandler::stop();
             return $result !== false ? $result : $unfilteredValue; // FIXME? strict check that it is a double
         }
-        // At this stage input is not a string
 
-        return $value;
+        // At this stage input is not a string
+        return $unfilteredValue;
     }
 
     /**

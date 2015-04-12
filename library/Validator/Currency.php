@@ -125,7 +125,7 @@ class Currency extends AbstractValidator
      */
     public function getCurrencyCode()
     {
-        return $this->currencyCode; // FIXME
+        return $this->currencyCode;
     }
 
     /**
@@ -157,6 +157,35 @@ class Currency extends AbstractValidator
     public function setLocale($locale)
     {
         $this->locale = $locale;
+        return $this;
+    }
+
+    /**
+     * Whether to allow breaking spaces within currency string.
+     *
+     * @var bool
+     */
+    protected $breakingSpaceAllowed = true;
+
+    /**
+     * Are breaking spaces allowed within currency string?
+     *
+     * @return boolean
+     */
+    public function isBreakingSpaceAllowed()
+    {
+        return $this->breakingSpaceAllowed;
+    }
+
+    /**
+     * Set the breacking space allowed option.
+     *
+     * @param bool $breakingSpaceAllowed
+     * @return $this
+     */
+    public function setBreakingSpaceAllowed($breakingSpaceAllowed)
+    {
+        $this->breakingSpaceAllowed = (bool) $breakingSpaceAllowed;
         return $this;
     }
 
@@ -259,6 +288,7 @@ class Currency extends AbstractValidator
         );
         $filter->setScaleCorrectness($this->getScaleCorrectness());
         $filter->setCurrencyCorrectness($this->getCurrencyCorrectness());
+        $filter->setBreakingSpaceAllowed($this->isBreakingSpaceAllowed());
         // Filtering
         $result = $filter->filter($this->getValue());
         // Retrieve updated currency code
