@@ -45,7 +45,6 @@ class Uncurrency extends AbstractFilter
      * Default options
      *
      * Meanings:
-
      *
      * @var array
      */
@@ -74,8 +73,8 @@ class Uncurrency extends AbstractFilter
      * - Key 'currency_correctness' contains a boolean value indicating
      *   if the presence and the correctness of the currency is mandatory or not
      *
-     * @param array|\Traversable|string|null    $localeOrOptions
-     * @param string|null                       $currencyCode
+     * @param array|\Traversable|string|null $localeOrOptions
+     * @param string|null $currencyCode
      */
     public function __construct(
         $localeOrOptions = null,
@@ -106,7 +105,7 @@ class Uncurrency extends AbstractFilter
      */
     public function setBreakingSpaceAllowed($allow)
     {
-        $this->options['breaking_space_allowed'] = (bool)  $allow;
+        $this->options['breaking_space_allowed'] = (bool)$allow;
         return $this;
     }
 
@@ -139,19 +138,11 @@ class Uncurrency extends AbstractFilter
             $currencyCode = $this->setupCurrencyCode();
 
             if ($this->getCurrencyCorrectness()) {
-                /*
-                 * parse MODE
-                 *
-                 * The following parsing mode allows the predefined currency code ONLY.
-                 * Also it should be more strict and faster than parseCurrency.
-                 */
+                // The following parsing mode allows the predefined currency code ONLY.
+                // Also it should be more strict and faster than parseCurrency.
                 $result = $formatter->parse($value, \NumberFormatter::TYPE_DOUBLE, $position);
             } else {
-                /*
-                 * parseCurrency MODE
-                 *
-                 * The following parsing mode can work with multiple currencies.
-                 */
+                // The following parsing mode can work with multiple currencies.
                 $result = $formatter->parseCurrency($value, $resultCurrencyCode, $position);
             }
 
@@ -161,18 +152,19 @@ class Uncurrency extends AbstractFilter
             if ($result !== false && ((is_float($result) && !is_infinite($result) && !is_nan($result)))) {
                 ErrorHandler::stop();
 
-                // Check if the parsing finished before the end of the input
+                // Exit if the parsing has finished before the end of the input
                 if ($position < grapheme_strlen($value)) {
                     return $unfilteredValue;
                 }
 
+                // Retrieve currency symbol for the given locale and currency code
                 $currencySymbol = $this->getFirstCurrencySymbol($this->getLocale(), $currencyCode);
 
+                // Exit if the currency correctness is mandatory and the currency symbol is not present in the input
                 if ($this->getCurrencyCorrectness() && grapheme_strpos($value, $currencySymbol) === false) {
                     return $unfilteredValue;
                 }
 
-                // Check if the num. of decimal digits match the requirement (unless the result is not finite or is nan)
                 if ($this->getScaleCorrectness()) {
                     $countedDecimals = $this->countDecimalDigits(
                         $value,
@@ -180,15 +172,17 @@ class Uncurrency extends AbstractFilter
                         $currencySymbol
                     );
 
+                    // Exit if the number of decimal digits (i.e., the scale) does not match the requirement
                     if ($fractionDigits !== $countedDecimals) {
                         return $unfilteredValue;
                     }
                 }
 
+                // Here we have a perfectly parsed (pattern correct, currency correct, scale correct) currency amount
                 return $result;
             }
 
-            // At this stage result is FALSE and input probably is not a well-formatted currency
+            // At this stage result is FALSE and input probably is a not canonical currency amount
 
             // Check if the currency symbol is mandatory (assiming 'parse MODE')
             if ($this->getCurrencyCorrectness()) {
@@ -375,10 +369,12 @@ class Uncurrency extends AbstractFilter
         $regexComponents = $this->getRegexComponents();
 
         if (!isset($regexComponents[$regexComponent])) {
-            throw new I18nException\InvalidArgumentException(sprintf(
-                'Regex component not found; received "%s"',
-                $regexComponent
-            ));
+            throw new I18nException\InvalidArgumentException(
+                sprintf(
+                    'Regex component not found; received "%s"',
+                    $regexComponent
+                )
+            );
         }
 
         return $regexComponents[$regexComponent];

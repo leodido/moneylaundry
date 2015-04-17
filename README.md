@@ -50,10 +50,6 @@ Add `leodido/moneylaundry` to your `composer.json`.
 }
 ```
 
-##### Note
-
-Not already published on packagist, use `dev-develop` for now.
-
 Development
 -----------
 
@@ -64,12 +60,12 @@ Then you can run tests:
 1. Unit tests suite
 
     ```
-    vendor/bin/phpunit
+    vendor/bin/phpunit -c $PWD/unit.xml
     ```
     
     - Almost completely covered.
 
-2. Integration tests suite
+2. Integration tests suite [**WIP**]
 
     ```
     vendor/bin/phpunit -c $PWD/integration.xml
@@ -78,18 +74,6 @@ Then you can run tests:
     - More than 45K tests will be executed
     
     - Results available in `data` directory
-
-### Todo list
-
-1. Complete `MoneyLaundry\Filter\Currency`
-
-2. Complete `MoneyLaundryUnitTest\Filter\CurrencyTest`
-
-3. Create other integration tests
-
-4. Fix not already supported locales
-
-5. Test against different versions of **intl** extension and **icu** library, and report results
 
 ---
 

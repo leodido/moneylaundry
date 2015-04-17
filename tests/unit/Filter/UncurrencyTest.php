@@ -102,69 +102,6 @@ class UncurrencyTest extends AbstractTest
         $this->assertFalse($filter->getScaleCorrectness());
     }
 
-    public function testGetSymbolsAndRegexComponents()
-    {
-        $filter = new Uncurrency('it_IT');
-        $filter->filter('1.234,61 €');
-        $this->assertInternalType('array', $filter->getRegexComponents());
-
-        $formatter = $filter->getFormatter();
-        $this->assertEquals(
-            $formatter->getAttribute(\NumberFormatter::FRACTION_DIGITS),
-            $filter->getSymbol(Uncurrency::FRACTION_DIGITS)
-        );
-        $this->assertEquals(
-            $formatter->getSymbol(\NumberFormatter::CURRENCY_SYMBOL),
-            $filter->getSymbol(Uncurrency::CURRENCY_SYMBOL)
-        );
-        $this->assertEquals(
-            $formatter->getSymbol(\NumberFormatter::MONETARY_GROUPING_SEPARATOR_SYMBOL),
-            $filter->getSymbol(Uncurrency::GROUP_SEPARATOR_SYMBOL)
-        );
-        $this->assertEquals(
-            $formatter->getSymbol(\NumberFormatter::MONETARY_SEPARATOR_SYMBOL),
-            $filter->getSymbol(Uncurrency::SEPARATOR_SYMBOL)
-        );
-        $this->assertEquals(
-            $formatter->getSymbol(\NumberFormatter::INFINITY_SYMBOL),
-            $filter->getSymbol(Uncurrency::INFINITY_SYMBOL)
-        );
-        $this->assertEquals(
-            $formatter->getSymbol(\NumberFormatter::NAN_SYMBOL),
-            $filter->getSymbol(Uncurrency::NAN_SYMBOL)
-        );
-
-        if (StringUtils::hasPcreUnicodeSupport()) {
-            $this->assertEquals(
-                'u',
-                $filter->getRegexComponent(Uncurrency::REGEX_FLAGS)
-            );
-            $this->assertEquals(
-                '\p{N}',
-                $filter->getRegexComponent(Uncurrency::REGEX_NUMBERS)
-            );
-        } else {
-            $this->assertEquals(
-                '',
-                $filter->getRegexComponent(Uncurrency::REGEX_FLAGS)
-            );
-            $this->assertEquals(
-                '0-9',
-                $filter->getRegexComponent(Uncurrency::REGEX_NUMBERS)
-            );
-        }
-    }
-
-    /**
-     * @expectedException \Zend\I18n\Exception\InvalidArgumentException
-     */
-    public function testGetSymbolsShouldThrowInvalidArgumentExceptionWhenSymbolDoesNotExists()
-    {
-        $filter = new Uncurrency('it_IT');
-        $filter->filter('1.234,61 €');
-        $filter->getSymbol(-1);
-    }
-
     /**
      * @expectedException \Zend\I18n\Exception\InvalidArgumentException
      */
@@ -174,25 +111,6 @@ class UncurrencyTest extends AbstractTest
         $filter->filter('1.234,61 €');
         $filter->getRegexComponent(-1);
     }
-
-    // FIXME: move this in the AbstractFilterTest
-//    public function testSetLocaleShouldVoidFormatter()
-//    {
-//        $filter = new Uncurrency('it_IT');
-//        $reflector = new \ReflectionClass($filter);
-//        $property = $reflector->getProperty('formatter');
-//        $property->setAccessible(true);
-//
-//        $filter->getFormatter();
-//
-//        $this->assertNotNull($property->getValue($filter));
-//
-//        $filter->setLocale('en_US');
-//
-//        $this->assertNull($property->getValue($filter));
-//
-//        $property->setAccessible(false);
-//    }
 
     public function testChangeFormatterOnFly()
     {
@@ -325,7 +243,7 @@ class UncurrencyTest extends AbstractTest
         $this->assertSame(1234.61, $filter->filter('1234,61'));
 
         // pattern not correct (no grouping separator), fraction digit correct, currency code as currency
-        if (version_compare($GLOBALS['INTL_ICU_VERSION'], '4.8.1.1') > 0) { // FIXME: $GLOBALS['INTL_ICU_VERSION'] can be undefined
+        if (version_compare($GLOBALS['INTL_ICU_VERSION'], '4.8.1.1') > 0) {
             $this->assertSame(1234.61, $filter->filter('1234,61 EUR'));
         }
         // pattern correct, fraction digit correct, display name as currency
@@ -387,7 +305,7 @@ class UncurrencyTest extends AbstractTest
         $this->assertSame((float) 0, $filter->filter('০.০'));
         $this->assertSame(0.01, $filter->filter($formatter->format(0.01))); // '০.০১৳' (w/ currency symbol)
         $this->assertSame(0.01, $filter->filter('০.০১০'));
-//         $this->assertSame((float) 0, $filter->filter('(০.০)')); // FIXME: how could be negative zero allowed?
+        // $this->assertSame((float) 0, $filter->filter('(০.০)')); // FIXME? negative zero allowed
         $this->assertSame(-0.01, $filter->filter($formatter->format(-0.01))); // (০.০১৳) (w/ currency symbol)
         $this->assertSame(-0.01, $filter->filter('(০.০১)'));
     }

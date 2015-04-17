@@ -142,4 +142,22 @@ class AbstractFilter extends AbstractTest
 
         $reflMethod->setAccessible(false);
     }
+
+//    public function testSetLocaleShouldVoidFormatter()
+//    {
+//        $filter = new Uncurrency('it_IT');
+//        $reflector = new \ReflectionClass($filter);
+//        $property = $reflector->getProperty('formatter');
+//        $property->setAccessible(true);
+//
+//        $filter->getFormatter();
+//
+//        $this->assertNotNull($property->getValue($filter));
+//
+//        $filter->setLocale('en_US');
+//
+//        $this->assertNull($property->getValue($filter));
+//
+//        $property->setAccessible(false);
+//    }
 }
