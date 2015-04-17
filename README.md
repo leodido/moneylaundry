@@ -74,6 +74,15 @@ Then you can run tests:
     - More than 45K tests will be executed
     
     - Results available in `data` directory
+    
+    
+Authors
+-------
+
+Main contributors (i.e., authors) are:
+
+- Leo Di Donato, a.k.a. **leodido** - [github](http://git.io/leodido) - [@leodido](http://twitter.com/leodido)
+- Leonardo Grasso, a.k.a. **leogr** - [github](http://github.com/leogr)
 
 ---
 
